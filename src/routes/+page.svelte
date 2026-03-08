@@ -103,18 +103,20 @@
       >
         <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
           {#each photos as photo}
-            <a
-              href={`/photo/${photo.id}`}
-              use:registerPhoto={photo.id}
-              class={`group block overflow-hidden border border-black bg-white ${
-                activePhotoId === photo.id ? "ring-1 ring-black" : ""
-              }`}
-              on:mouseenter={() => setActivePhoto(photo.id)}
-              on:mouseleave={clearActivePhoto}
-              on:focusin={() => setActivePhoto(photo.id)}
-              on:focusout={clearActivePhoto}
-            >
-              {#if photo.imageUrl}
+            {#if photo.imageUrl}
+              <a
+                href={photo.imageUrl}
+                target="_blank"
+                rel="noreferrer"
+                use:registerPhoto={photo.id}
+                class={`group block overflow-hidden border border-black bg-white ${
+                  activePhotoId === photo.id ? "ring-1 ring-black" : ""
+                }`}
+                on:mouseenter={() => setActivePhoto(photo.id)}
+                on:mouseleave={clearActivePhoto}
+                on:focusin={() => setActivePhoto(photo.id)}
+                on:focusout={clearActivePhoto}
+              >
                 <img
                   src={photo.imageUrl}
                   alt={photo.title || "Archive photo"}
@@ -124,14 +126,25 @@
                   loading="lazy"
                   on:error={tryDirectSource}
                 />
-              {:else}
+              </a>
+            {:else}
+              <div
+                use:registerPhoto={photo.id}
+                class={`group block overflow-hidden border border-black bg-white ${
+                  activePhotoId === photo.id ? "ring-1 ring-black" : ""
+                }`}
+                on:mouseenter={() => setActivePhoto(photo.id)}
+                on:mouseleave={clearActivePhoto}
+                on:focusin={() => setActivePhoto(photo.id)}
+                on:focusout={clearActivePhoto}
+              >
                 <div
                   class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
                 >
                   <span class="marker-text">Image unavailable</span>
                 </div>
-              {/if}
-            </a>
+              </div>
+            {/if}
           {/each}
         </div>
 
