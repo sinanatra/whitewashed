@@ -257,7 +257,7 @@
         <div class="absolute right-4 top-4 z-10 flex flex-col gap-2">
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom in"
             on:click={() => zoomBy(1)}
             on:pointerdown={(event) => event.stopPropagation()}
@@ -266,7 +266,7 @@
           </button>
           <button
             type="button"
-            class="flex h-10 w-10 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom out"
             on:click={() => zoomBy(-1)}
             on:pointerdown={(event) => event.stopPropagation()}
