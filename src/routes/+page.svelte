@@ -86,22 +86,21 @@
   <Hero />
 
   <section class="px-4 py-10 sm:px-6 lg:px-6">
-   
     {#if loadError}
-      <p class="mb-6  -black px-3 py-2 text-sm"><span class="marker-text">{loadError}</span></p>
+      <p class="mb-6 -black px-3 py-2 text-sm">
+        <span class="marker-text">{loadError}</span>
+      </p>
     {/if}
 
     {#if !photos.length}
-      <div
-        class="mx-auto max-w-[1800px]  -black px-5 py-10 text-sm"
-      >
+      <div class="mx-auto max-w-[1800px] -black px-5 py-10 text-sm">
         <span class="marker-text">No photos yet.</span>
       </div>
     {:else}
       <section
         class="mx-auto grid max-w-[1800px] gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] xl:items-start"
       >
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
+        <div class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
           {#each photos as photo}
             {#if photo.imageUrl}
               <a
@@ -109,8 +108,7 @@
                 target="_blank"
                 rel="noreferrer"
                 use:registerPhoto={photo.id}
-                class={`group block overflow-hidden  -black bg-white ${
-                  activePhotoId === photo.id ? "ring-1 ring-black" : ""
+                class={`group block overflow-hidden  -black bg-white ""
                 }`}
                 on:mouseenter={() => setActivePhoto(photo.id)}
                 on:mouseleave={clearActivePhoto}
@@ -121,7 +119,9 @@
                   src={photo.imageUrl}
                   alt={photo.title || "Archive photo"}
                   class={`aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-                    activePhotoId === photo.id ? "grayscale-0" : "threshold-image"
+                    activePhotoId === photo.id
+                      ? "grayscale-0"
+                      : "threshold-image"
                   }`}
                   loading="lazy"
                   on:error={tryDirectSource}
