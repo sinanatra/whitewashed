@@ -226,7 +226,7 @@
         bind:this={mapElement}
         bind:clientWidth={viewportWidth}
         bind:clientHeight={viewportHeight}
-        class={`relative h-[34rem] overflow-hidden border border-black bg-neutral-200 ${
+        class={`relative h-[34rem] overflow-hidden  -black bg-neutral-200 ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         role="application"
@@ -257,7 +257,7 @@
         <div class="absolute right-4 top-4 z-10 flex flex-col gap-2">
           <button
             type="button"
-            class="flex h-8 w-8 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center  -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom in"
             on:click={() => zoomBy(1)}
             on:pointerdown={(event) => event.stopPropagation()}
@@ -266,7 +266,7 @@
           </button>
           <button
             type="button"
-            class="flex h-8 w-8 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center  -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom out"
             on:click={() => zoomBy(-1)}
             on:pointerdown={(event) => event.stopPropagation()}
@@ -288,7 +288,7 @@
               on:blur={() => dispatch("leave")}
             >
               <span
-                class={`relative flex items-center justify-center rounded-full border border-white bg-black transition-all duration-200 ${
+                class={`relative flex items-center justify-center rounded-full  -white bg-black transition-all duration-200 ${
                   activePhotoId === marker.id ? "h-8 w-8" : "h-5 w-5"
                 }`}
               >

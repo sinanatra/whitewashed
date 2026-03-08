@@ -46,12 +46,12 @@
 </svelte:head>
 
 <main class="min-h-screen bg-white px-4 py-5 sm:px-6 lg:px-8">
-  <div class="mb-4 flex items-center justify-between border-b border-black pb-3">
+  <div class="mb-4 flex items-center justify-between -b -black pb-3">
     <a href="/" class="text-sm underline underline-offset-4"><span class="marker-text">Archive</span></a>
   </div>
 
   <section class="mx-auto grid max-w-[1800px] gap-6 lg:grid-cols-[minmax(0,1.35fr)_20rem] lg:items-start">
-    <div class="flex min-h-[calc(100vh-7rem)] items-center justify-center border border-black bg-neutral-50 p-4 sm:p-6">
+    <div class="flex min-h-[calc(100vh-7rem)] items-center justify-center  -black bg-neutral-50 p-4 sm:p-6">
       {#if photo.imageUrl}
         <img
           src={photo.imageUrl}
@@ -60,12 +60,12 @@
           on:error={tryDirectSource}
         />
       {:else}
-        <div class="border border-black px-6 py-10 text-sm"><span class="marker-text">Image unavailable</span></div>
+        <div class=" -black px-6 py-10 text-sm"><span class="marker-text">Image unavailable</span></div>
       {/if}
     </div>
 
-    <aside class="border border-black bg-white">
-      <div class="border-b border-black px-4 py-4">
+    <aside class=" -black bg-white">
+      <div class="-b -black px-4 py-4">
         <h1 class="mt-2 text-2xl leading-tight tracking-tight">
           <span class="marker-text">{photo.title || 'Untitled'}</span>
         </h1>
@@ -94,7 +94,7 @@
         </div>
 
         {#if photo.description}
-          <div class="border-t border-black pt-4">
+          <div class="-t -black pt-4">
             <p class="text-sm text-black/50"><span class="marker-text">Notes</span></p>
             <p class="mt-2 leading-7 text-black/75"><span class="marker-text">{photo.description}</span></p>
           </div>

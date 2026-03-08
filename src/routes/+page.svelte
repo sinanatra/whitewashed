@@ -88,12 +88,12 @@
   <section class="px-4 py-10 sm:px-6 lg:px-6">
    
     {#if loadError}
-      <p class="mb-6 border border-black px-3 py-2 text-sm"><span class="marker-text">{loadError}</span></p>
+      <p class="mb-6  -black px-3 py-2 text-sm"><span class="marker-text">{loadError}</span></p>
     {/if}
 
     {#if !photos.length}
       <div
-        class="mx-auto max-w-[1800px] border border-black px-5 py-10 text-sm"
+        class="mx-auto max-w-[1800px]  -black px-5 py-10 text-sm"
       >
         <span class="marker-text">No photos yet.</span>
       </div>
@@ -109,7 +109,7 @@
                 target="_blank"
                 rel="noreferrer"
                 use:registerPhoto={photo.id}
-                class={`group block overflow-hidden border border-black bg-white ${
+                class={`group block overflow-hidden  -black bg-white ${
                   activePhotoId === photo.id ? "ring-1 ring-black" : ""
                 }`}
                 on:mouseenter={() => setActivePhoto(photo.id)}
@@ -130,7 +130,7 @@
             {:else}
               <div
                 use:registerPhoto={photo.id}
-                class={`group block overflow-hidden border border-black bg-white ${
+                class={`group block overflow-hidden  -black bg-white ${
                   activePhotoId === photo.id ? "ring-1 ring-black" : ""
                 }`}
                 on:mouseenter={() => setActivePhoto(photo.id)}

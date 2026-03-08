@@ -31,7 +31,7 @@
 </script>
 
 <section
-  class="relative isolate overflow-hidden border-b border-black bg-black text-white"
+  class="relative isolate overflow-hidden -b -black bg-black text-white"
 >
   <div class="group absolute inset-0">
     <img
