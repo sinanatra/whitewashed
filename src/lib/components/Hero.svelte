@@ -23,10 +23,10 @@
   }
 
   const headlineWords = createRevealSequence(
-    'A visual archive of censorship in Berlin, documenting pro-Palestinian graffiti and the whitewashed walls left behind to silence them'
+    "A visual archive of censorship in Berlin, documenting pro-Palestinian graffiti and whitewashed walls left as evidence of attempts to silence them.",
   );
   const descriptionWords = createRevealSequence(
-    'Photographs, and locations document how public expression is erased, covered, and contested across the city.'
+    "Photographs, and locations document how public expression is erased, covered, and contested across the city.",
   );
 </script>
 
@@ -57,7 +57,7 @@
               class="marker-word"
               style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}
               >{item.word}</span
-            >{index < headlineWords.length - 1 ? ' ' : ''}
+            >{index < headlineWords.length - 1 ? " " : ""}
           {/each}
         </span>
       </h1>
@@ -68,7 +68,7 @@
               class="marker-word"
               style={`--word-order:${item.order};--marker-sequence-delay:240ms;`}
               >{item.word}</span
-            >{index < descriptionWords.length - 1 ? ' ' : ''}
+            >{index < descriptionWords.length - 1 ? " " : ""}
           {/each}
         </span>
       </p>

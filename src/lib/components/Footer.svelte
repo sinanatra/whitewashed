@@ -33,12 +33,19 @@
   }
 
   const submissionEmail = decodeBase64(encodedEmail);
-  const promptWords = createRevealSequence("Have an image to add to the archive?");
+  const submissionSubject = encodeURIComponent("Whitewashed submission");
+  const promptWords = createRevealSequence(
+    "Have an image to add to the archive?",
+  );
   const emailWords = createRevealSequence(`Submit at ${submissionEmail}`);
 </script>
 
-<footer class="border-t border-black bg-black px-4 py-6 text-white sm:px-6 lg:px-6 min-h-60">
-  <div class="mx-auto flex max-w-[1800px] flex-col gap-2 text-sm text-white/80 sm:flex-row sm:items-center sm:justify-between">
+<footer
+  class="border-t border-black bg-black px-4 py-6 text-white sm:px-6 lg:px-6 min-h-60"
+>
+  <div
+    class="mx-auto max-w-[1800px] text-sm text-white/80 sm:flex-row sm:items-center sm:justify-between"
+  >
     <p>
       <span class="marker-text">
         {#each promptWords as item, index}
@@ -46,12 +53,12 @@
             class="marker-word"
             style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}
             >{item.word}</span
-          >{index < promptWords.length - 1 ? ' ' : ''}
+          >{index < promptWords.length - 1 ? " " : ""}
         {/each}
       </span>
     </p>
     <a
-      href={`mailto:${submissionEmail}`}
+      href={`mailto:${submissionEmail}?subject=${submissionSubject}`}
       class="text-white underline underline-offset-4"
     >
       <span class="marker-text">
@@ -60,7 +67,7 @@
             class="marker-word"
             style={`--word-order:${item.order};--marker-sequence-delay:180ms;`}
             >{item.word}</span
-          >{index < emailWords.length - 1 ? ' ' : ''}
+          >{index < emailWords.length - 1 ? " " : ""}
         {/each}
       </span>
     </a>
