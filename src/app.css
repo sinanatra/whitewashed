@@ -18,8 +18,8 @@ body {
   display: inline;
   background: #fff;
   color: #000;
-  padding: 0.08em 0.28em 0.18em;
-  line-height: 1.15;
+  padding: 0.1em 0.28em 0.28em;
+  line-height: 1.2;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
