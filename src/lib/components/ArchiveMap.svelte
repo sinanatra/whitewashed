@@ -5,6 +5,8 @@
   export let activePhotoId = "";
 
   const TILE_SIZE = 256;
+  const MIN_ZOOM = 10;
+  const MAX_ZOOM = 16;
   const BERLIN_BOUNDS = {
     minLat: 52.3383,
     maxLat: 52.6755,
@@ -21,8 +23,10 @@
   let mapElement;
   let isDragging = false;
   let center = DEFAULT_CENTER;
+  let zoom = MIN_ZOOM;
   let dragStart = null;
   let hasInitializedCenter = false;
+  let hasInitializedZoom = false;
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -68,6 +72,39 @@
     return 12;
   }
 
+  function setZoom(nextZoom, focusPoint = null) {
+    const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    if (clampedZoom === zoom) {
+      return;
+    }
+
+    if (!mapElement || !focusPoint) {
+      zoom = clampedZoom;
+      return;
+    }
+
+    const rect = mapElement.getBoundingClientRect();
+    const localX = focusPoint.clientX - rect.left;
+    const localY = focusPoint.clientY - rect.top;
+    const focusWorld = {
+      x: centerWorld.x - halfWidth + localX,
+      y: centerWorld.y - halfHeight + localY,
+    };
+    const focusLatLng = unprojectFromWorld(focusWorld.x, focusWorld.y, zoom);
+
+    zoom = clampedZoom;
+
+    const nextFocusWorld = projectToWorld(focusLatLng.lat, focusLatLng.lng, clampedZoom);
+
+    center = clampCenter(
+      unprojectFromWorld(
+        nextFocusWorld.x - localX + halfWidth,
+        nextFocusWorld.y - localY + halfHeight,
+        clampedZoom,
+      ),
+    );
+  }
+
   function handlePointerDown(event) {
     if (!mapElement) {
       return;
@@ -109,8 +146,8 @@
     }
   }
 
-  function handleWheel(event) {
-    event.preventDefault();
+  function zoomBy(step) {
+    setZoom(zoom + step);
   }
 
   $: geotaggedPhotos = photos
@@ -123,7 +160,7 @@
       (photo) => Number.isFinite(photo.lat) && Number.isFinite(photo.lng),
     );
 
-  $: zoom = resolveZoom(geotaggedPhotos.length);
+  $: resolvedZoom = resolveZoom(geotaggedPhotos.length);
   $: initialCenter = geotaggedPhotos.length
     ? clampCenter({
         lat:
@@ -137,6 +174,10 @@
   $: if (!hasInitializedCenter) {
     center = initialCenter;
     hasInitializedCenter = true;
+  }
+  $: if (!hasInitializedZoom) {
+    zoom = resolvedZoom;
+    hasInitializedZoom = true;
   }
 
   $: centerWorld = projectToWorld(center.lat, center.lng, zoom);
@@ -194,7 +235,6 @@
         on:pointermove={handlePointerMove}
         on:pointerup={handlePointerUp}
         on:pointercancel={handlePointerUp}
-        on:wheel|passive={handleWheel}
       >
         <div class="absolute inset-0 grayscale contrast-125">
           {#each tiles as tile}
@@ -213,6 +253,27 @@
         <div
           class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.14)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.14)_1px,transparent_1px)] bg-[size:56px_56px] opacity-20"
         ></div>
+
+        <div class="absolute right-4 top-4 z-10 flex flex-col gap-2">
+          <button
+            type="button"
+            class="flex h-10 w-10 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            aria-label="Zoom in"
+            on:click={() => zoomBy(1)}
+            on:pointerdown={(event) => event.stopPropagation()}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            class="flex h-10 w-10 items-center justify-center border border-black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            aria-label="Zoom out"
+            on:click={() => zoomBy(-1)}
+            on:pointerdown={(event) => event.stopPropagation()}
+          >
+            -
+          </button>
+        </div>
 
         {#each markers as marker}
           {#if marker.left >= -20 && marker.left <= viewportWidth + 20 && marker.top >= -20 && marker.top <= viewportHeight + 20}
