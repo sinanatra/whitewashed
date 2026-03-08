@@ -24,6 +24,45 @@ body {
   -webkit-box-decoration-break: clone;
 }
 
+.marker-word {
+  --word-order: 0;
+  --marker-sequence-delay: 0ms;
+  position: relative;
+  display: inline-block;
+  color: #000;
+}
+
+.marker-word::after {
+  content: "";
+  position: absolute;
+  inset: 0 -0.04em 0.05em;
+  background: #111;
+  transform-origin: left center;
+  animation: marker-word-reveal 520ms cubic-bezier(0.22, 1, 0.36, 1)
+    calc(var(--marker-sequence-delay) + (var(--word-order) * 52ms)) both;
+}
+
+@keyframes marker-word-reveal {
+  0% {
+    transform: scaleX(1);
+  }
+
+  60% {
+    transform: scaleX(1);
+  }
+
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marker-word::after {
+    animation: none;
+    transform: scaleX(0);
+  }
+}
+
 
 ::selection {
   background: #fff;
