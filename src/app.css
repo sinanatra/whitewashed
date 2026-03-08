@@ -13,3 +13,9 @@ body {
   min-height: 100vh;
   text-rendering: geometricPrecision;
 }
+
+
+::selection {
+  background: #fff;
+  color: #fff;
+}
