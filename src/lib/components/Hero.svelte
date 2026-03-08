@@ -5,7 +5,7 @@
     <img
       src="/cover.png"
       alt="Whitewashed cover"
-      class="h-[450px] w-full object-cover grayscale transition duration-500 group-hover:grayscale-0"
+      class="h-[450px] w-full object-cover grayscale transition duration-500"
       loading="eager"
     />
     <div class="absolute inset-0 bg-black/55"></div>
