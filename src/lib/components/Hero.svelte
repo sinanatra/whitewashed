@@ -37,12 +37,12 @@
     <img
       src="/cover.png"
       alt="Whitewashed cover"
-      class="h-[450px] w-full object-cover grayscale transition duration-500"
+      class="threshold-image-strong h-[450px] w-full object-cover"
       loading="eager"
     />
     <div class="absolute inset-0 bg-black/55"></div>
     <div
-      class="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/15"
+      class="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/0"
     ></div>
   </div>
 

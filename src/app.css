@@ -12,6 +12,8 @@ body {
   font-family: "Times New Roman", Times, serif;
   min-height: 100vh;
   text-rendering: geometricPrecision;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
 }
 
 .marker-text {
@@ -22,6 +24,14 @@ body {
   line-height: 1.2;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+
+.threshold-image {
+  filter: grayscale(1) contrast(2.4) brightness(1.08);
+}
+
+.threshold-image-strong {
+  filter: grayscale(1) contrast(3.6) brightness(1.12);
 }
 
 .marker-word {

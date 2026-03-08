@@ -121,7 +121,7 @@
                   src={photo.imageUrl}
                   alt={photo.title || "Archive photo"}
                   class={`aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-                    activePhotoId === photo.id ? "grayscale-0" : "grayscale"
+                    activePhotoId === photo.id ? "grayscale-0" : "threshold-image"
                   }`}
                   loading="lazy"
                   on:error={tryDirectSource}
