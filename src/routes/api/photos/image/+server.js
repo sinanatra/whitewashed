@@ -1,10 +1,14 @@
 import { fetchSeatableAsset, getSeatableStatus } from '$lib/server/seatable-store';
 
+function logServerError(error) {
+  console.error('[api/photos/image] GET failed', error);
+}
+
 export async function GET({ url }) {
   try {
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
-      return new Response('SeaTable not configured', { status: 500 });
+      return new Response('SeaTable not configured', { status: 503 });
     }
 
     const src = String(url.searchParams.get('src') || '').trim();
@@ -26,6 +30,7 @@ export async function GET({ url }) {
       headers
     });
   } catch (error) {
-    return new Response(error.message || 'Image proxy error', { status: 502 });
+    logServerError(error);
+    return new Response('Image proxy error', { status: 502 });
   }
 }

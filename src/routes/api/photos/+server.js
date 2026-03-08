@@ -1,6 +1,13 @@
 import { json } from '@sveltejs/kit';
 import { getSeatableStatus, listSeatablePhotos, saveSeatablePhoto } from '$lib/server/seatable-store';
 
+const SAFE_UPLOAD_ERRORS = new Set([
+  'Latitude and longitude must be provided together',
+  'Invalid coordinates',
+  'Missing file',
+  'File too large (max 10MB)'
+]);
+
 function proxifyPhotoImageUrl(imageUrl) {
   const url = String(imageUrl || '').trim();
   if (!url || url.startsWith('data:')) {
@@ -10,11 +17,15 @@ function proxifyPhotoImageUrl(imageUrl) {
   return `/api/photos/image?src=${encodeURIComponent(url)}`;
 }
 
+function logServerError(context, error) {
+  console.error(`[api/photos] ${context}`, error);
+}
+
 export async function GET() {
   try {
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
-      throw new Error(seatable.reason);
+      return json({ error: 'Archivio non configurato' }, { status: 503 });
     }
 
     const photos = (await listSeatablePhotos()).map((photo) => ({
@@ -23,7 +34,8 @@ export async function GET() {
     }));
     return json({ photos, storage: 'seatable' });
   } catch (error) {
-    return json({ error: error.message || 'Errore lettura archivio' }, { status: 500 });
+    logServerError('GET failed', error);
+    return json({ error: 'Errore lettura archivio' }, { status: 500 });
   }
 }
 
@@ -31,7 +43,7 @@ export async function POST({ request }) {
   try {
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
-      throw new Error(seatable.reason);
+      return json({ error: 'Archivio non configurato' }, { status: 503 });
     }
 
     const formData = await request.formData();
@@ -48,6 +60,16 @@ export async function POST({ request }) {
       { status: 201 }
     );
   } catch (error) {
-    return json({ error: error.message || 'Errore salvataggio' }, { status: 400 });
+    const message = error instanceof Error ? error.message : '';
+    const isSafeValidationError = SAFE_UPLOAD_ERRORS.has(message);
+
+    if (!isSafeValidationError) {
+      logServerError('POST failed', error);
+    }
+
+    return json(
+      { error: isSafeValidationError ? message : 'Errore salvataggio' },
+      { status: isSafeValidationError ? 400 : 500 }
+    );
   }
 }

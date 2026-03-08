@@ -355,14 +355,14 @@ function parseCoordinates(formData) {
   }
 
   if (!rawLat || !rawLng) {
-    throw new Error('Latitudine e longitudine vanno inserite insieme');
+    throw new Error('Latitude and longitude must be provided together');
   }
 
   const lat = numberValue(rawLat);
   const lng = numberValue(rawLng);
 
   if (lat === null || lng === null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-    throw new Error('Coordinate non valide');
+    throw new Error('Invalid coordinates');
   }
 
   return { lat, lng };
@@ -375,11 +375,11 @@ function assertFile(file) {
     typeof file.arrayBuffer !== 'function' ||
     typeof file.size !== 'number'
   ) {
-    throw new Error('File mancante');
+    throw new Error('Missing file');
   }
 
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    throw new Error('File troppo grande (max 10MB)');
+    throw new Error('File too large (max 10MB)');
   }
 }
 
