@@ -17,17 +17,15 @@
   <div
     class="relative mx-auto flex min-h-[450px] max-w-7xl items-end px-4 py-10 sm:px-6 lg:px-8"
   >
-    <div class="max-w-8xl">
-      <h1
-        class="max-w-4xl  text-4xl leading-none tracking-tight sm:text-5xl lg:text-6xl"
-      >
-        <span class="marker-text whitespace-pre-line leading-[1.15]">
-          A visual archive of censorship in Berlin, tracing pro-Palestinian
-          graffiti and the whitewashed surfaces left behind to suppress it.
+    <div class="max-w-8xl pb-2">
+      <h1 class="max-w-4xl text-4xl tracking-tight sm:text-5xl lg:text-6xl">
+        <span class="marker-text whitespace-pre-line">
+          A visual archive of censorship in Berlin, documenting pro-Palestinian
+          graffiti and the whitewashed walls left behind to silence them
         </span>
       </h1>
       <p class="mt-5 max-w-xl text-sm leading-6 sm:text-base">
-        <span class="marker-text whitespace-pre-line leading-none">
+        <span class="marker-text whitespace-pre-line">
           Photographs, and locations document how public expression is erased,
           covered, and contested across the city.
         </span>
