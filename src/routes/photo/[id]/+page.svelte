@@ -3,6 +3,24 @@
 
   const photo = data.photo;
 
+  function formatCoordinate(value) {
+    const number = Number(value);
+    return Number.isFinite(number) ? number.toFixed(6) : '';
+  }
+
+  function formatDate(value) {
+    if (!value) {
+      return 'n/a';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'n/a';
+    }
+
+    return date.toLocaleString();
+  }
+
   function tryDirectSource(event) {
     const img = event.currentTarget;
     const src = String(img?.getAttribute('src') || '');
@@ -29,20 +47,59 @@
 
 <main class="min-h-screen bg-white px-4 py-5 sm:px-6 lg:px-8">
   <div class="mb-4 flex items-center justify-between border-b border-black pb-3">
-    <a href="/" class="text-[11px] uppercase tracking-[0.22em] underline underline-offset-4">Archive</a>
-    <p class="text-[11px] uppercase tracking-[0.22em] text-black/55">Image</p>
+    <a href="/" class="text-sm underline underline-offset-4">Archive</a>
   </div>
 
-  <div class="flex min-h-[calc(100vh-6rem)] items-center justify-center">
-    {#if photo.imageUrl}
-      <img
-        src={photo.imageUrl}
-        alt={photo.title || 'Archive image'}
-        class="max-h-[88vh] w-auto max-w-full object-contain"
-        on:error={tryDirectSource}
-      />
-    {:else}
-      <div class="border border-black px-6 py-10 text-sm">Image unavailable</div>
-    {/if}
-  </div>
+  <section class="mx-auto grid max-w-[1800px] gap-6 lg:grid-cols-[minmax(0,1.35fr)_20rem] lg:items-start">
+    <div class="flex min-h-[calc(100vh-7rem)] items-center justify-center border border-black bg-neutral-50 p-4 sm:p-6">
+      {#if photo.imageUrl}
+        <img
+          src={photo.imageUrl}
+          alt={photo.title || 'Archive image'}
+          class="max-h-[84vh] w-auto max-w-full object-contain"
+          on:error={tryDirectSource}
+        />
+      {:else}
+        <div class="border border-black px-6 py-10 text-sm">Image unavailable</div>
+      {/if}
+    </div>
+
+    <aside class="border border-black bg-white">
+      <div class="border-b border-black px-4 py-4">
+        <h1 class="mt-2 text-2xl leading-tight tracking-tight">
+          {photo.title || 'Untitled'}
+        </h1>
+      </div>
+
+      <div class="space-y-4 px-4 py-4 text-sm">
+        <div class="grid gap-3">
+          <div>
+            <p class="text-sm text-black/50">Taken</p>
+            <p class="mt-1 leading-6">{formatDate(photo.takenAt)}</p>
+          </div>
+
+          <div>
+            <p class="text-sm text-black/50">Archived</p>
+            <p class="mt-1 leading-6">{formatDate(photo.createdAt)}</p>
+          </div>
+
+          {#if photo.lat !== null && photo.lng !== null && !(photo.lat === 0 && photo.lng === 0)}
+            <div>
+              <p class="text-sm text-black/50">Coordinates</p>
+              <p class="mt-1 leading-6">
+                {formatCoordinate(photo.lat)}, {formatCoordinate(photo.lng)}
+              </p>
+            </div>
+          {/if}
+        </div>
+
+        {#if photo.description}
+          <div class="border-t border-black pt-4">
+            <p class="text-sm text-black/50">Notes</p>
+            <p class="mt-2 leading-7 text-black/75">{photo.description}</p>
+          </div>
+        {/if}
+      </div>
+    </aside>
+  </section>
 </main>
