@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+import { env as privateEnv } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 import { getSeatableStatus, listSeatablePhotos, saveSeatablePhoto } from '$lib/server/seatable-store';
 
@@ -5,8 +7,25 @@ const SAFE_UPLOAD_ERRORS = new Set([
   'Latitude and longitude must be provided together',
   'Invalid coordinates',
   'Missing file',
-  'File too large (max 10MB)'
+  'File too large (max 10MB)',
+  'Upload password is not configured',
+  'Invalid upload password'
 ]);
+
+function getUploadPassword() {
+  return String(privateEnv.UPLOAD_PASSWORD || process.env.UPLOAD_PASSWORD || '').trim();
+}
+
+function passwordsMatch(expectedPassword, providedPassword) {
+  const expected = Buffer.from(expectedPassword, 'utf8');
+  const provided = Buffer.from(providedPassword, 'utf8');
+
+  if (expected.length !== provided.length) {
+    return false;
+  }
+
+  return timingSafeEqual(expected, provided);
+}
 
 function proxifyPhotoImageUrl(imageUrl) {
   const url = String(imageUrl || '').trim();
@@ -47,6 +66,17 @@ export async function POST({ request }) {
     }
 
     const formData = await request.formData();
+    const expectedPassword = getUploadPassword();
+    if (!expectedPassword) {
+      throw new Error('Upload password is not configured');
+    }
+
+    const providedPassword = String(formData.get('password') || '').trim();
+    if (!providedPassword || !passwordsMatch(expectedPassword, providedPassword)) {
+      throw new Error('Invalid upload password');
+    }
+
+    formData.delete('password');
     const photo = await saveSeatablePhoto(formData);
 
     return json(

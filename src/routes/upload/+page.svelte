@@ -12,6 +12,7 @@
   let optimizationNote = '';
   let uploadFile = null;
   let fileInput;
+  let uploadPassword = '';
 
   let formState = {
     title: '',
@@ -230,6 +231,7 @@
       formData.set('takenAt', formState.takenAt);
       formData.set('lat', formState.lat);
       formData.set('lng', formState.lng);
+      formData.set('password', uploadPassword);
 
       const response = await fetch('/api/photos', {
         method: 'POST',
@@ -243,6 +245,7 @@
 
       success = 'Saved.';
       formState = { title: '', description: '', lat: '', lng: '', takenAt: '' };
+      uploadPassword = '';
       uploadFile = null;
       optimizationNote = '';
       if (fileInput) {
@@ -286,6 +289,18 @@
     <label class="block text-sm">
       <span class="marker-text">Title</span>
       <input name="title" bind:value={formState.title} class="mt-1 w-full border border-black px-3 py-2" required />
+    </label>
+
+    <label class="block text-sm">
+      <span class="marker-text">Upload password</span>
+      <input
+        name="password"
+        type="password"
+        bind:value={uploadPassword}
+        class="mt-1 w-full border border-black px-3 py-2"
+        autocomplete="current-password"
+        required
+      />
     </label>
 
     <label class="block text-sm">
