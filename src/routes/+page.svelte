@@ -88,14 +88,14 @@
   <section class="px-4 py-10 sm:px-6 lg:px-6">
    
     {#if loadError}
-      <p class="mb-6 border border-black px-3 py-2 text-sm">{loadError}</p>
+      <p class="mb-6 border border-black px-3 py-2 text-sm"><span class="marker-text">{loadError}</span></p>
     {/if}
 
     {#if !photos.length}
       <div
         class="mx-auto max-w-[1800px] border border-black px-5 py-10 text-sm"
       >
-        No photos yet.
+        <span class="marker-text">No photos yet.</span>
       </div>
     {:else}
       <section
@@ -128,7 +128,7 @@
                 <div
                   class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
                 >
-                  Image unavailable
+                  <span class="marker-text">Image unavailable</span>
                 </div>
               {/if}
             </a>

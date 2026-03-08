@@ -300,7 +300,7 @@
     </div>
   {:else}
     <div class="px-4 py-10 text-sm text-black/65">
-      No geotagged images available yet.
+      <span class="marker-text">No geotagged images available yet.</span>
     </div>
   {/if}
 </section>

@@ -262,13 +262,13 @@
 
 <main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
   <header class="mb-8 flex items-end justify-between border-b border-black pb-3">
-    <h1 class="text-2xl font-semibold tracking-tight">Upload</h1>
-    <a href="/" class="text-sm underline underline-offset-4">Back</a>
+    <h1 class="text-2xl font-semibold tracking-tight"><span class="marker-text">Upload</span></h1>
+    <a href="/" class="text-sm underline underline-offset-4"><span class="marker-text">Back</span></a>
   </header>
 
   <form class="space-y-4" on:submit={submit}>
     <label class="block text-sm">
-      Photo
+      <span class="marker-text">Photo</span>
       <input
         name="photo"
         type="file"
@@ -280,50 +280,50 @@
       />
     </label>
     {#if optimizationNote}
-      <p class="text-sm">{optimizationNote}</p>
+      <p class="text-sm"><span class="marker-text">{optimizationNote}</span></p>
     {/if}
 
     <label class="block text-sm">
-      Title
+      <span class="marker-text">Title</span>
       <input name="title" bind:value={formState.title} class="mt-1 w-full border border-black px-3 py-2" required />
     </label>
 
     <label class="block text-sm">
-      Description
+      <span class="marker-text">Description</span>
       <textarea name="description" bind:value={formState.description} rows="4" class="mt-1 w-full border border-black px-3 py-2"></textarea>
     </label>
 
     <div class="grid gap-4 sm:grid-cols-2">
       <label class="block text-sm">
-        Taken at
+        <span class="marker-text">Taken at</span>
         <input type="datetime-local" name="takenAt" bind:value={formState.takenAt} class="mt-1 w-full border border-black px-3 py-2" />
       </label>
 
       <div class="pt-6">
-        <button type="button" on:click={useBrowserLocation} class="border border-black px-3 py-2 text-sm">Use current location</button>
+        <button type="button" on:click={useBrowserLocation} class="border border-black px-3 py-2 text-sm"><span class="marker-text">Use current location</span></button>
       </div>
 
       <label class="block text-sm">
-        Latitude
+        <span class="marker-text">Latitude</span>
         <input type="number" step="any" min="-90" max="90" name="lat" bind:value={formState.lat} class="mt-1 w-full border border-black px-3 py-2" />
       </label>
 
       <label class="block text-sm">
-        Longitude
+        <span class="marker-text">Longitude</span>
         <input type="number" step="any" min="-180" max="180" name="lng" bind:value={formState.lng} class="mt-1 w-full border border-black px-3 py-2" />
       </label>
     </div>
 
     <button type="submit" disabled={loading} class="border border-black px-4 py-2 text-sm">
-      {loading ? 'Saving...' : 'Save'}
+      <span class="marker-text">{loading ? 'Saving...' : 'Save'}</span>
     </button>
 
     {#if error}
-      <p class="text-sm">{error}</p>
+      <p class="text-sm"><span class="marker-text">{error}</span></p>
     {/if}
 
     {#if success}
-      <p class="text-sm">{success}</p>
+      <p class="text-sm"><span class="marker-text">{success}</span></p>
     {/if}
   </form>
 </main>

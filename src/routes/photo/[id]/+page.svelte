@@ -47,7 +47,7 @@
 
 <main class="min-h-screen bg-white px-4 py-5 sm:px-6 lg:px-8">
   <div class="mb-4 flex items-center justify-between border-b border-black pb-3">
-    <a href="/" class="text-sm underline underline-offset-4">Archive</a>
+    <a href="/" class="text-sm underline underline-offset-4"><span class="marker-text">Archive</span></a>
   </div>
 
   <section class="mx-auto grid max-w-[1800px] gap-6 lg:grid-cols-[minmax(0,1.35fr)_20rem] lg:items-start">
@@ -60,34 +60,34 @@
           on:error={tryDirectSource}
         />
       {:else}
-        <div class="border border-black px-6 py-10 text-sm">Image unavailable</div>
+        <div class="border border-black px-6 py-10 text-sm"><span class="marker-text">Image unavailable</span></div>
       {/if}
     </div>
 
     <aside class="border border-black bg-white">
       <div class="border-b border-black px-4 py-4">
         <h1 class="mt-2 text-2xl leading-tight tracking-tight">
-          {photo.title || 'Untitled'}
+          <span class="marker-text">{photo.title || 'Untitled'}</span>
         </h1>
       </div>
 
       <div class="space-y-4 px-4 py-4 text-sm">
         <div class="grid gap-3">
           <div>
-            <p class="text-sm text-black/50">Taken</p>
-            <p class="mt-1 leading-6">{formatDate(photo.takenAt)}</p>
+            <p class="text-sm text-black/50"><span class="marker-text">Taken</span></p>
+            <p class="mt-1 leading-6"><span class="marker-text">{formatDate(photo.takenAt)}</span></p>
           </div>
 
           <div>
-            <p class="text-sm text-black/50">Archived</p>
-            <p class="mt-1 leading-6">{formatDate(photo.createdAt)}</p>
+            <p class="text-sm text-black/50"><span class="marker-text">Archived</span></p>
+            <p class="mt-1 leading-6"><span class="marker-text">{formatDate(photo.createdAt)}</span></p>
           </div>
 
           {#if photo.lat !== null && photo.lng !== null && !(photo.lat === 0 && photo.lng === 0)}
             <div>
-              <p class="text-sm text-black/50">Coordinates</p>
+              <p class="text-sm text-black/50"><span class="marker-text">Coordinates</span></p>
               <p class="mt-1 leading-6">
-                {formatCoordinate(photo.lat)}, {formatCoordinate(photo.lng)}
+                <span class="marker-text">{formatCoordinate(photo.lat)}, {formatCoordinate(photo.lng)}</span>
               </p>
             </div>
           {/if}
@@ -95,8 +95,8 @@
 
         {#if photo.description}
           <div class="border-t border-black pt-4">
-            <p class="text-sm text-black/50">Notes</p>
-            <p class="mt-2 leading-7 text-black/75">{photo.description}</p>
+            <p class="text-sm text-black/50"><span class="marker-text">Notes</span></p>
+            <p class="mt-2 leading-7 text-black/75"><span class="marker-text">{photo.description}</span></p>
           </div>
         {/if}
       </div>
