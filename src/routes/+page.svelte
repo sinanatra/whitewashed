@@ -1,4 +1,5 @@
 <script>
+  import { imageReady } from "$lib/actions/image-ready.js";
   import ArchiveMap from "$lib/components/ArchiveMap.svelte";
   import Footer from "$lib/components/Footer.svelte";
   import Hero from "$lib/components/Hero.svelte";
@@ -130,6 +131,7 @@
                   <img
                     src={photo.imageUrl}
                     alt={photo.title || "Archive photo"}
+                    use:imageReady={() => markPhotoLoaded(photo.id)}
                     class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
                       activePhotoId === photo.id
                         ? "grayscale-0"

@@ -1,4 +1,6 @@
 <script>
+  import { imageReady } from '$lib/actions/image-ready.js';
+
   export let data;
 
   const photo = data.photo;
@@ -68,6 +70,7 @@
           <img
             src={photo.imageUrl}
             alt={photo.title || 'Archive image'}
+            use:imageReady={markLoaded}
             class={`image-resolve image-resolve-detail max-h-[84vh] w-auto max-w-full object-contain ${
               imageLoaded ? 'image-resolve-loaded' : ''
             }`}
