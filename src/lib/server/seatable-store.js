@@ -3,6 +3,8 @@ import { env as privateEnv } from '$env/dynamic/private';
 
 const DEFAULT_SERVER_URL = 'https://cloud.seatable.io';
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const EXTERNAL_LINK_CACHE_TTL_MS = 10 * 60 * 1000;
+const externalLinkContextCache = new Map();
 
 function readEnv(key, fallback = '') {
   const value = privateEnv[key];
@@ -27,6 +29,8 @@ function getConfig() {
     baseName: String(readEnv('SEATABLE_BASE_NAME')).trim(),
     baseUuid: String(readEnv('SEATABLE_BASE_UUID')).trim(),
     tableName: String(readEnv('SEATABLE_TABLE_NAME', 'Archive')).trim(),
+    externalLinkUrl: String(readEnv('SEATABLE_EXTERNAL_LINK_URL')).trim(),
+    externalLinkToken: String(readEnv('SEATABLE_EXTERNAL_LINK_TOKEN')).trim(),
     maxBase64Length: Number(readEnv('SEATABLE_MAX_IMAGE_BASE64_LENGTH', '60000')) || 60000,
     safeBase64Cap: Number(readEnv('SEATABLE_SAFE_BASE64_CAP', '60000')) || 60000,
     enableLegacyBase64Fallback: /^(1|true|yes)$/i.test(
@@ -61,6 +65,45 @@ function hasAccountTokenConfig(config) {
 
 function isAccountTokenConfigComplete(config) {
   return Boolean(config.accountToken && config.workspaceId && config.baseName);
+}
+
+function extractExternalLinkToken(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  const match = raw.match(/\/dtable\/external-links\/([^/?#]+)/i);
+  if (match?.[1]) {
+    return match[1].trim();
+  }
+
+  return raw.replace(/^\/+|\/+$/g, '');
+}
+
+function resolveExternalLinkUrl(config) {
+  const explicitUrl = String(config.externalLinkUrl || '').trim();
+  if (explicitUrl) {
+    try {
+      return new URL(explicitUrl).toString();
+    } catch {
+      const token = extractExternalLinkToken(explicitUrl);
+      if (token) {
+        return `${config.serverUrl}/dtable/external-links/${token}/`;
+      }
+    }
+  }
+
+  const token = extractExternalLinkToken(config.externalLinkToken);
+  if (!token) {
+    return '';
+  }
+
+  return `${config.serverUrl}/dtable/external-links/${token}/`;
+}
+
+function hasExternalLinkConfig(config) {
+  return Boolean(resolveExternalLinkUrl(config));
 }
 
 function textValue(value) {
@@ -383,19 +426,112 @@ function assertFile(file) {
   }
 }
 
-function assertConfig(config) {
+function assertReadConfig(config) {
   const hasApiToken = Boolean(config.apiToken);
   const hasAccountToken = Boolean(config.accountToken && config.workspaceId && config.baseName);
+  const hasExternalLink = hasExternalLinkConfig(config);
 
-  if (!hasApiToken && !hasAccountToken) {
+  if (!hasApiToken && !hasAccountToken && !hasExternalLink) {
     throw new Error(
-      'Config SeaTable incompleta: usa API token oppure Account token + workspace/base'
+      'Config SeaTable incompleta: usa API token oppure Account token + workspace/base oppure SEATABLE_EXTERNAL_LINK_URL'
     );
   }
 
   if (!config.tableName) {
     throw new Error('Config SeaTable incompleta: table name mancante');
   }
+}
+
+function assertWriteConfig(config) {
+  const hasApiToken = Boolean(config.apiToken);
+  const hasAccountToken = Boolean(config.accountToken && config.workspaceId && config.baseName);
+
+  if (!hasApiToken && !hasAccountToken) {
+    throw new Error(
+      'Config SeaTable incompleta: gli upload richiedono API token oppure Account token + workspace/base'
+    );
+  }
+
+  if (!config.tableName) {
+    throw new Error('Config SeaTable incompleta: table name mancante');
+  }
+}
+
+function parseExternalLinkPageValue(html, key) {
+  const pattern = new RegExp(`${key}\\s*:\\s*['"]([^'"]*)['"]`);
+  const match = String(html || '').match(pattern);
+  return match?.[1] ? match[1].trim() : '';
+}
+
+function splitSetCookieHeader(value) {
+  return String(value || '')
+    .split(/,(?=[^;,=\s]+=[^;,]+)/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function getSetCookieValues(response) {
+  if (response?.headers && typeof response.headers.getSetCookie === 'function') {
+    return response.headers.getSetCookie().filter(Boolean);
+  }
+
+  const header = response?.headers?.get('set-cookie');
+  return header ? splitSetCookieHeader(header) : [];
+}
+
+function toCookieHeader(setCookies) {
+  return setCookies
+    .map((cookie) => String(cookie || '').split(';')[0].trim())
+    .filter(Boolean)
+    .join('; ');
+}
+
+async function getExternalLinkContext(config) {
+  const externalLinkUrl = resolveExternalLinkUrl(config);
+  if (!externalLinkUrl) {
+    throw new Error('SEATABLE_EXTERNAL_LINK_URL mancante');
+  }
+
+  const cached = externalLinkContextCache.get(externalLinkUrl);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const response = await fetch(externalLinkUrl, {
+    headers: {
+      'Accept-Encoding': 'identity'
+    }
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`SeaTable external-link error: ${response.status} ${body}`);
+  }
+
+  const html = await response.text();
+  const accessToken = parseExternalLinkPageValue(html, 'accessToken');
+  const workspaceId = parseExternalLinkPageValue(html, 'workspaceID');
+  const baseUuid = parseExternalLinkPageValue(html, 'dtableUuid');
+  const cookieHeader = toCookieHeader(getSetCookieValues(response));
+
+  if (!accessToken || !workspaceId || !baseUuid) {
+    throw new Error('SeaTable external-link page missing access token or base identifiers');
+  }
+
+  const context = {
+    accessToken,
+    workspaceId,
+    baseUuid,
+    externalLinkUrl,
+    cookieHeader
+  };
+
+  externalLinkContextCache.set(externalLinkUrl, {
+    expiresAt: Date.now() + EXTERNAL_LINK_CACHE_TTL_MS,
+    value: context
+  });
+
+  return context;
 }
 
 async function getBaseTokenWithApiToken(config) {
@@ -506,6 +642,33 @@ async function getSeaTableAccessToken(config) {
   }
 
   throw new Error(authErrors.join(' | ') || 'Impossibile ottenere un base token SeaTable');
+}
+
+async function getSeaTableReadContext(config) {
+  const authErrors = [];
+
+  if (hasExternalLinkConfig(config)) {
+    try {
+      const external = await getExternalLinkContext(config);
+      return {
+        accessToken: external.accessToken,
+        baseUuid: external.baseUuid,
+        workspaceId: external.workspaceId,
+        cookieHeader: external.cookieHeader,
+        externalLinkUrl: external.externalLinkUrl
+      };
+    } catch (error) {
+      authErrors.push(error?.message || 'Errore auth con external link');
+    }
+  }
+
+  try {
+    return await getSeaTableAccessToken(config);
+  } catch (error) {
+    authErrors.push(error?.message || 'Impossibile ottenere un base token SeaTable');
+  }
+
+  throw new Error(authErrors.join(' | ') || 'Impossibile ottenere accesso in lettura a SeaTable');
 }
 
 function extractedRowsLookUsable(config, extracted, schema) {
@@ -1018,35 +1181,41 @@ export function getSeatableStatus() {
   const apiTokenProvided = hasApiTokenConfig(config);
   const accountTokenProvided = hasAccountTokenConfig(config);
   const accountTokenComplete = isAccountTokenConfigComplete(config);
+  const externalLinkProvided = hasExternalLinkConfig(config);
 
-  const configured = Boolean(config.tableName && (apiTokenProvided || accountTokenComplete));
+  const configured = Boolean(
+    config.tableName && (externalLinkProvided || apiTokenProvided || accountTokenComplete)
+  );
   const partial =
     !configured &&
-    Boolean(apiTokenProvided || accountTokenProvided || config.baseUuid);
+    Boolean(apiTokenProvided || accountTokenProvided || config.baseUuid || config.externalLinkUrl);
 
   const missingKeys = [];
-  if (!apiTokenProvided) {
+  if (!apiTokenProvided && !externalLinkProvided) {
     if (!config.accountToken) missingKeys.push('SEATABLE_ACCOUNT_TOKEN');
     if (!config.workspaceId) missingKeys.push('SEATABLE_WORKSPACE_ID');
     if (!config.baseName) missingKeys.push('SEATABLE_BASE_NAME');
   }
+  if (!apiTokenProvided && !accountTokenComplete && !externalLinkProvided) {
+    missingKeys.push('SEATABLE_EXTERNAL_LINK_URL');
+  }
 
-  const missingReason = `SeaTable obbligatorio: configura SEATABLE_API_TOKEN oppure SEATABLE_ACCOUNT_TOKEN + SEATABLE_WORKSPACE_ID + SEATABLE_BASE_NAME. Mancanti: ${missingKeys.join(', ') || 'n/d'}`;
+  const missingReason = `SeaTable obbligatorio: configura SEATABLE_EXTERNAL_LINK_URL per la lettura pubblica oppure SEATABLE_API_TOKEN oppure SEATABLE_ACCOUNT_TOKEN + SEATABLE_WORKSPACE_ID + SEATABLE_BASE_NAME. Mancanti: ${missingKeys.join(', ') || 'n/d'}`;
 
   return {
     configured,
     partial,
     reason: partial
-      ? 'SeaTable config parziale: completa token e identificativi base'
+      ? 'SeaTable config parziale: completa external link oppure token e identificativi base'
       : missingReason
   };
 }
 
 export async function listSeatablePhotos() {
   const config = getConfig();
-  assertConfig(config);
+  assertReadConfig(config);
 
-  const auth = await getSeaTableAccessToken(config);
+  const auth = await getSeaTableReadContext(config);
   const baseUuid = auth.baseUuid || config.baseUuid;
 
   if (!baseUuid) {
@@ -1063,7 +1232,7 @@ export async function listSeatablePhotos() {
 
 export async function saveSeatablePhoto(formData) {
   const config = getConfig();
-  assertConfig(config);
+  assertWriteConfig(config);
 
   const file = formData.get('photo');
   assertFile(file);
@@ -1158,7 +1327,7 @@ export async function saveSeatablePhoto(formData) {
 
 export async function fetchSeatableAsset(sourceUrl) {
   const config = getConfig();
-  assertConfig(config);
+  assertReadConfig(config);
 
   const src = String(sourceUrl || '').trim();
   if (!src) {
@@ -1166,7 +1335,22 @@ export async function fetchSeatableAsset(sourceUrl) {
   }
 
   const targetUrl = isAbsoluteHttpUrl(src) ? src : normalizeImageUrl(config, src);
-  const auth = await getSeaTableAccessToken(config);
+  const auth = await getSeaTableReadContext(config);
+
+  if (auth.cookieHeader && auth.externalLinkUrl) {
+    const sharedResponse = await fetch(targetUrl, {
+      headers: {
+        Cookie: auth.cookieHeader,
+        Referer: auth.externalLinkUrl,
+        'Accept-Encoding': 'identity'
+      },
+      redirect: 'follow'
+    });
+
+    if (isUsableAssetResponse(sharedResponse)) {
+      return sharedResponse;
+    }
+  }
 
   const authHeaders = [
     { Authorization: `Bearer ${auth.accessToken}` },

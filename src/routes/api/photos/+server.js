@@ -29,7 +29,7 @@ function passwordsMatch(expectedPassword, providedPassword) {
 
 function proxifyPhotoImageUrl(imageUrl) {
   const url = String(imageUrl || '').trim();
-  if (!url || url.startsWith('data:') || /^https?:\/\//i.test(url)) {
+  if (!url || url.startsWith('data:')) {
     return url;
   }
 
