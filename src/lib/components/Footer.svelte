@@ -44,7 +44,7 @@
   class="-t -black bg-black px-4 py-6 text-white sm:px-6 lg:px-6 min-h-60"
 >
   <div
-    class="mx-auto max-w-[1800px] text-sm text-white/80 sm:flex-row sm:items-center sm:justify-between"
+    class="mx-auto max-w-[1800px] text-xl text-white/80 sm:flex-row sm:items-center sm:justify-between"
   >
     <p>
       <span class="marker-text">
