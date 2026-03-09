@@ -85,7 +85,7 @@
 <main>
   <Hero />
 
-  <section class="px-4 py-10 sm:px-6 lg:px-6">
+  <section>
     {#if loadError}
       <p class="mb-6 -black px-3 py-2 text-sm">
         <span class="marker-text">{loadError}</span>
