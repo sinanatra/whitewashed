@@ -1,4 +1,6 @@
 <script>
+  import { submissionFormUrl } from "$lib/constants/submission.js";
+
   function createRevealSequence(text) {
     const words = text.trim().split(/\s+/);
     const ranked = words
@@ -28,11 +30,28 @@
   const descriptionWords = createRevealSequence(
     "Photographs, and locations document how public expression is erased, covered, and contested across the city.",
   );
+  const submitWords = createRevealSequence("submit");
 </script>
 
-<section
-  class="relative isolate overflow-hidden -b -black bg-black text-white"
->
+<div class="absolute right-0 top-0 z-10">
+  <a
+    href={submissionFormUrl}
+    target="_blank"
+    rel="noreferrer"
+    class="inline-flex items-center justify-center text-xl text-white transition hover:bg-neutral-900"
+  >
+    <span class="marker-text">
+      {#each submitWords as item, index}
+        <span
+          class="marker-word"
+          style={`--word-order:${item.order};--marker-sequence-delay:120ms;`}
+          >{item.word}</span
+        >{index < submitWords.length - 1 ? " " : ""}
+      {/each}
+    </span>
+  </a>
+</div>
+<section class="relative isolate overflow-hidden -b -black bg-black text-white">
   <div class="group absolute inset-0">
     <img
       src="/hero.png"

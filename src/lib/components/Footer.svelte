@@ -1,5 +1,5 @@
 <script>
-  const encodedEmail = "Y2lhb0BnaWFjb21vLndlYnNpdGU=";
+  import { submissionFormUrl } from "$lib/constants/submission.js";
 
   function createRevealSequence(text) {
     const words = text.trim().split(/\s+/);
@@ -24,20 +24,10 @@
     });
   }
 
-  function decodeBase64(value) {
-    if (typeof atob === "function") {
-      return atob(value);
-    }
-
-    return Buffer.from(value, "base64").toString("utf8");
-  }
-
-  const submissionEmail = decodeBase64(encodedEmail);
-  const submissionSubject = encodeURIComponent("Whitewashed submission");
   const promptWords = createRevealSequence(
     "Have an image to add to the archive?",
   );
-  const emailWords = createRevealSequence(`Submit at ${submissionEmail}`);
+  const formWords = createRevealSequence("Submit through this form");
 </script>
 
 <footer
@@ -58,16 +48,18 @@
       </span>
     </p>
     <a
-      href={`mailto:${submissionEmail}?subject=${submissionSubject}`}
+      href={submissionFormUrl}
+      target="_blank"
+      rel="noreferrer"
       class="text-white underline underline-offset-4"
     >
       <span class="marker-text">
-        {#each emailWords as item, index}
+        {#each formWords as item, index}
           <span
             class="marker-word"
             style={`--word-order:${item.order};--marker-sequence-delay:180ms;`}
             >{item.word}</span
-          >{index < emailWords.length - 1 ? " " : ""}
+          >{index < formWords.length - 1 ? " " : ""}
         {/each}
       </span>
     </a>
