@@ -35,7 +35,7 @@
 >
   <div class="group absolute inset-0">
     <img
-      src="/cover.png"
+      src="/hero.png"
       alt="Whitewashed cover"
       class="threshold-image-strong h-[450px] w-full object-cover"
       loading="eager"
