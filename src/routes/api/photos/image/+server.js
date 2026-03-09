@@ -22,8 +22,18 @@ export async function GET({ url }) {
 
     const headers = {
       'Content-Type': contentType,
-      'Cache-Control': 'public, max-age=300'
+      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
     };
+
+    const etag = asset.headers.get('etag');
+    if (etag) {
+      headers.ETag = etag;
+    }
+
+    const lastModified = asset.headers.get('last-modified');
+    if (lastModified) {
+      headers['Last-Modified'] = lastModified;
+    }
 
     return new Response(body, {
       status: 200,

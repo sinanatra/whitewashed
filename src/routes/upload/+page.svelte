@@ -2,9 +2,10 @@
   import * as exifr from 'exifr';
 
   const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-  const OPTIMIZE_TRIGGER_BYTES = 6 * 1024 * 1024;
-  const MAX_DIMENSION = 2800;
-  const MIN_DIMENSION = 1200;
+  const TARGET_UPLOAD_BYTES = 2 * 1024 * 1024;
+  const OPTIMIZE_TRIGGER_BYTES = 2 * 1024 * 1024;
+  const MAX_DIMENSION = 2200;
+  const MIN_LONG_SIDE = 1400;
 
   let loading = false;
   let error = '';
@@ -95,23 +96,29 @@
       return { file, note: '' };
     }
 
-    if (file.size <= OPTIMIZE_TRIGGER_BYTES) {
-      return { file, note: '' };
-    }
-
     try {
       const bitmap = await createImageBitmap(file);
-      let width = bitmap.width;
-      let height = bitmap.height;
+      const originalWidth = bitmap.width;
+      const originalHeight = bitmap.height;
+      let width = originalWidth;
+      let height = originalHeight;
 
-      const maxSide = Math.max(width, height);
-      if (maxSide > MAX_DIMENSION) {
-        const ratio = MAX_DIMENSION / maxSide;
+      const originalMaxSide = Math.max(width, height);
+      const shouldOptimize =
+        file.size > OPTIMIZE_TRIGGER_BYTES || originalMaxSide > MAX_DIMENSION;
+
+      if (!shouldOptimize) {
+        bitmap.close();
+        return { file, note: '' };
+      }
+
+      if (originalMaxSide > MAX_DIMENSION) {
+        const ratio = MAX_DIMENSION / originalMaxSide;
         width = Math.max(1, Math.round(width * ratio));
         height = Math.max(1, Math.round(height * ratio));
       }
 
-      let quality = 0.9;
+      let quality = file.type === 'image/webp' ? 0.82 : 0.84;
       let blob = null;
       let attempts = 0;
       let outputType = file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
@@ -131,25 +138,28 @@
         ctx.drawImage(bitmap, 0, 0, width, height);
 
         blob = await canvasToBlob(canvas, outputType, quality);
-        if (blob && blob.size <= MAX_UPLOAD_BYTES) {
+        if (blob && blob.size <= TARGET_UPLOAD_BYTES) {
           break;
         }
 
-        if (quality > 0.68) {
-          quality = Math.max(0.68, quality - 0.06);
-        } else {
-          width = Math.max(MIN_DIMENSION, Math.round(width * 0.88));
-          height = Math.max(MIN_DIMENSION, Math.round(height * 0.88));
+        if (quality > 0.66) {
+          quality = Math.max(0.66, quality - 0.05);
+        } else if (Math.max(width, height) > MIN_LONG_SIDE) {
+          width = Math.max(1, Math.round(width * 0.86));
+          height = Math.max(1, Math.round(height * 0.86));
+          quality = Math.min(0.8, quality + 0.04);
+        } else if (blob && blob.size <= MAX_UPLOAD_BYTES) {
+          break;
         }
 
         if (
-          attempts >= 6 &&
+          attempts >= 4 &&
           outputType !== 'image/jpeg' &&
           (!blob || blob.size > MAX_UPLOAD_BYTES)
         ) {
           outputType = 'image/jpeg';
           convertedToJpeg = file.type !== 'image/jpeg';
-          quality = 0.86;
+          quality = 0.8;
         }
       }
 
@@ -179,8 +189,13 @@
 
       const beforeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
       const afterMb = Math.round((optimized.size / (1024 * 1024)) * 10) / 10;
+      const resized = width !== originalWidth || height !== originalHeight;
+      const resizeNote = resized ? `, ${originalWidth}x${originalHeight} -> ${width}x${height}` : '';
       const conversionNote = convertedToJpeg ? ', converted to JPEG' : '';
-      return { file: optimized, note: `Optimized ${beforeMb}MB -> ${afterMb}MB${conversionNote}` };
+      return {
+        file: optimized,
+        note: `Optimized ${beforeMb}MB -> ${afterMb}MB${resizeNote}${conversionNote}`
+      };
     } catch {
       return { file, note: '' };
     }
