@@ -4,14 +4,19 @@ function logServerError(error) {
   console.error('[api/photos/image] GET failed', error);
 }
 
+function isAbsoluteHttpUrl(value) {
+  return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
 export async function GET({ url }) {
+  const src = String(url.searchParams.get('src') || '').trim();
+
   try {
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
       return new Response('SeaTable not configured', { status: 503 });
     }
 
-    const src = String(url.searchParams.get('src') || '').trim();
     if (!src) {
       return new Response('Missing src', { status: 400 });
     }
@@ -41,6 +46,11 @@ export async function GET({ url }) {
     });
   } catch (error) {
     logServerError(error);
+
+    if (isAbsoluteHttpUrl(src)) {
+      return Response.redirect(src, 302);
+    }
+
     return new Response('Image proxy error', { status: 502 });
   }
 }

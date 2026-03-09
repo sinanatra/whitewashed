@@ -29,7 +29,7 @@ function passwordsMatch(expectedPassword, providedPassword) {
 
 function proxifyPhotoImageUrl(imageUrl) {
   const url = String(imageUrl || '').trim();
-  if (!url || url.startsWith('data:')) {
+  if (!url || url.startsWith('data:') || /^https?:\/\//i.test(url)) {
     return url;
   }
 
@@ -54,7 +54,7 @@ export async function GET() {
     return json({ photos, storage: 'seatable' });
   } catch (error) {
     logServerError('GET failed', error);
-    return json({ error: 'Errore lettura archivio' }, { status: 500 });
+    return json({ error: 'Error Loading the archive' }, { status: 500 });
   }
 }
 
@@ -62,7 +62,7 @@ export async function POST({ request }) {
   try {
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
-      return json({ error: 'Archivio non configurato' }, { status: 503 });
+      return json({ error: 'Config issue' }, { status: 503 });
     }
 
     const formData = await request.formData();
