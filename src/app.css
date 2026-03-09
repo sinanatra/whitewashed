@@ -34,6 +34,41 @@ body {
   filter: grayscale(1) contrast(3.6) brightness(1.12);
 }
 
+.image-frame {
+  position: relative;
+  overflow: hidden;
+  background: #e5e5e5;
+}
+
+.image-resolve {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.image-resolve-loaded {
+  opacity: 1;
+}
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: #e5e5e5;
+  opacity: 1;
+  transition: opacity 180ms ease;
+}
+
+.scan-overlay-detail {
+  inset: 1.5rem;
+}
+
+.scan-overlay-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .marker-word {
   --word-order: 0;
   --marker-sequence-delay: 0ms;
@@ -72,6 +107,10 @@ body {
   .marker-word::after {
     animation: none;
     transform: scaleX(0);
+  }
+
+  .image-resolve {
+    transition: opacity 0.01ms linear;
   }
 }
 

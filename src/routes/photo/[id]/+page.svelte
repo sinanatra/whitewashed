@@ -2,6 +2,7 @@
   export let data;
 
   const photo = data.photo;
+  let imageLoaded = false;
 
   function formatCoordinate(value) {
     const number = Number(value);
@@ -39,6 +40,10 @@
 
     img.src = direct;
   }
+
+  function markLoaded() {
+    imageLoaded = true;
+  }
 </script>
 
 <svelte:head>
@@ -53,12 +58,24 @@
   <section class="mx-auto grid max-w-[1800px] gap-6 lg:grid-cols-[minmax(0,1.35fr)_20rem] lg:items-start">
     <div class="flex min-h-[calc(100vh-7rem)] items-center justify-center  -black bg-neutral-50 p-4 sm:p-6">
       {#if photo.imageUrl}
-        <img
-          src={photo.imageUrl}
-          alt={photo.title || 'Archive image'}
-          class="max-h-[84vh] w-auto max-w-full object-contain"
-          on:error={tryDirectSource}
-        />
+        <div class="image-frame flex max-h-[84vh] w-full items-center justify-center">
+          <div
+            class={`scan-overlay scan-overlay-detail ${
+              imageLoaded ? 'scan-overlay-hidden' : ''
+            }`}
+            aria-hidden="true"
+          ></div>
+          <img
+            src={photo.imageUrl}
+            alt={photo.title || 'Archive image'}
+            class={`image-resolve image-resolve-detail max-h-[84vh] w-auto max-w-full object-contain ${
+              imageLoaded ? 'image-resolve-loaded' : ''
+            }`}
+            decoding="async"
+            on:load={markLoaded}
+            on:error={tryDirectSource}
+          />
+        </div>
       {:else}
         <div class=" -black px-6 py-10 text-sm"><span class="marker-text">Image unavailable</span></div>
       {/if}

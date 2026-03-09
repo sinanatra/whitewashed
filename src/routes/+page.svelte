@@ -9,6 +9,7 @@
   const loadError = data.error || "";
   let activePhotoId = "";
   const photoElements = new Map();
+  let loadedPhotoIds = {};
 
   function registerPhoto(node, photoId) {
     if (photoId) {
@@ -76,6 +77,10 @@
 
     img.src = direct;
   }
+
+  function markPhotoLoaded(photoId) {
+    loadedPhotoIds = { ...loadedPhotoIds, [photoId]: true };
+  }
 </script>
 
 <svelte:head>
@@ -115,17 +120,27 @@
                 on:focusin={() => setActivePhoto(photo.id)}
                 on:focusout={clearActivePhoto}
               >
-                <img
-                  src={photo.imageUrl}
-                  alt={photo.title || "Archive photo"}
-                  class={`aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-                    activePhotoId === photo.id
-                      ? "grayscale-0"
-                      : "threshold-image"
-                  }`}
-                  loading="lazy"
-                  on:error={tryDirectSource}
-                />
+                <div class="image-frame aspect-[4/5] min-h-[200px] w-full">
+                  <div
+                    class={`scan-overlay ${
+                      loadedPhotoIds[photo.id] ? "scan-overlay-hidden" : ""
+                    }`}
+                    aria-hidden="true"
+                  ></div>
+                  <img
+                    src={photo.imageUrl}
+                    alt={photo.title || "Archive photo"}
+                    class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
+                      activePhotoId === photo.id
+                        ? "grayscale-0"
+                        : "threshold-image"
+                    } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
+                    loading="lazy"
+                    decoding="async"
+                    on:load={() => markPhotoLoaded(photo.id)}
+                    on:error={tryDirectSource}
+                  />
+                </div>
               </a>
             {:else}
               <div
