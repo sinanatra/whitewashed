@@ -25,7 +25,7 @@
   }
 
   const headlineWords = createRevealSequence(
-    "A visual archive of censored pro-Palestinian graffiti across Berlin.",
+    "An archive documenting pro-Palestinian graffiti and the censorship of it across Berlin.",
   );
   const descriptionWords = createRevealSequence(
     "Tracking where graffiti appears and disappears, mapping the erasure of pro-Palestinian expression through photographs and locations across the city.",
