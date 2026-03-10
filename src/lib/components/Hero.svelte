@@ -25,10 +25,10 @@
   }
 
   const headlineWords = createRevealSequence(
-    "A visual archive of censorship in Berlin, documenting pro-Palestinian graffiti and whitewashed walls left as evidence of attempts to silence them.",
+    "A visual archive of censored pro-Palestinian graffiti across Berlin.",
   );
   const descriptionWords = createRevealSequence(
-    "Photographs, and locations document how public expression is erased, covered, and contested across the city.",
+    "Tracking where graffiti appears and disappears, mapping the erasure of pro-Palestinian expression through photographs and locations across the city.",
   );
   const submitWords = createRevealSequence("submit");
 </script>
@@ -51,7 +51,9 @@
     </span>
   </a>
 </div>
-<section class="relative isolate overflow-hidden -b -black bg-black text-white">
+<section
+  class=" pt-10 sm:pt-0 relative isolate overflow-hidden -b -black bg-black text-white"
+>
   <div class="group absolute inset-0">
     <img
       src="/hero.png"
