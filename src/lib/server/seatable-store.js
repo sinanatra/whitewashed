@@ -427,6 +427,15 @@ function assertFile(file) {
   }
 }
 
+function isFileLike(value) {
+  return (
+    value &&
+    typeof value === 'object' &&
+    typeof value.arrayBuffer === 'function' &&
+    typeof value.size === 'number'
+  );
+}
+
 async function extractUploadedPhotoMetadata(file) {
   const [gpsResult, exifResult] = await Promise.allSettled([
     exifr.gps(file),
@@ -1255,9 +1264,23 @@ export async function saveSeatablePhoto(formData) {
 
   const file = formData.get('photo');
   assertFile(file);
+  const metadataSourceFile = formData.get('photoMetadataSource');
 
   const providedCoordinates = parseCoordinates(formData);
-  const extractedMetadata = await extractUploadedPhotoMetadata(file);
+  let extractedMetadata = { lat: null, lng: null, takenAt: null };
+
+  if (isFileLike(metadataSourceFile)) {
+    extractedMetadata = await extractUploadedPhotoMetadata(metadataSourceFile);
+  }
+
+  if (
+    extractedMetadata.lat === null &&
+    extractedMetadata.lng === null &&
+    extractedMetadata.takenAt === null
+  ) {
+    extractedMetadata = await extractUploadedPhotoMetadata(file);
+  }
+
   const lat = providedCoordinates.lat ?? extractedMetadata.lat;
   const lng = providedCoordinates.lng ?? extractedMetadata.lng;
 

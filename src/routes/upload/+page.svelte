@@ -12,6 +12,7 @@
   let success = '';
   let optimizationNote = '';
   let uploadFile = null;
+  let originalUploadFile = null;
   let fileInput;
   let uploadPassword = '';
 
@@ -84,9 +85,12 @@
 
     if (!file) {
       uploadFile = null;
+      originalUploadFile = null;
       optimizationNote = '';
       return;
     }
+
+    originalUploadFile = file;
 
     if (!formState.title) {
       formState.title = titleFromFileName(file.name);
@@ -252,6 +256,9 @@
 
       const formData = new FormData();
       formData.set('photo', uploadFile);
+      if (originalUploadFile && originalUploadFile !== uploadFile) {
+        formData.set('photoMetadataSource', originalUploadFile);
+      }
       formData.set('title', formState.title);
       formData.set('description', formState.description);
       formData.set('takenAt', formState.takenAt);
@@ -273,6 +280,7 @@
       formState = { title: '', description: '', lat: '', lng: '', takenAt: '' };
       uploadPassword = '';
       uploadFile = null;
+      originalUploadFile = null;
       optimizationNote = '';
       if (fileInput) {
         fileInput.value = '';
