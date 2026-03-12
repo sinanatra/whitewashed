@@ -42,17 +42,28 @@
     return clean || 'Untitled';
   }
 
+  async function readExifMetadata(file) {
+    const [gpsResult, exifResult] = await Promise.allSettled([
+      exifr.gps(file),
+      exifr.parse(file, ['DateTimeOriginal', 'CreateDate'])
+    ]);
+
+    const gps = gpsResult.status === 'fulfilled' ? gpsResult.value : null;
+    const exif = exifResult.status === 'fulfilled' ? exifResult.value : null;
+
+    return {
+      takenAt: exif?.DateTimeOriginal || exif?.CreateDate || null,
+      latitude: gps?.latitude,
+      longitude: gps?.longitude
+    };
+  }
+
   async function applyExif(file) {
     try {
-      const exif = await exifr.parse(file, {
-        gps: true,
-        tiff: true,
-        exif: true,
-        pick: ['DateTimeOriginal', 'CreateDate', 'latitude', 'longitude']
-      });
+      const exif = await readExifMetadata(file);
 
-      if (!formState.takenAt && (exif?.DateTimeOriginal || exif?.CreateDate)) {
-        formState.takenAt = toLocalDatetimeValue(exif.DateTimeOriginal || exif.CreateDate);
+      if (!formState.takenAt && exif?.takenAt) {
+        formState.takenAt = toLocalDatetimeValue(exif.takenAt);
       }
 
       if (!formState.lat && Number.isFinite(exif?.latitude)) {

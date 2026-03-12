@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { env as privateEnv } from '$env/dynamic/private';
+import * as exifr from 'exifr';
 
 const DEFAULT_SERVER_URL = 'https://cloud.seatable.io';
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -424,6 +425,24 @@ function assertFile(file) {
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
     throw new Error('File too large (max 10MB)');
   }
+}
+
+async function extractUploadedPhotoMetadata(file) {
+  const [gpsResult, exifResult] = await Promise.allSettled([
+    exifr.gps(file),
+    exifr.parse(file, ['DateTimeOriginal', 'CreateDate'])
+  ]);
+
+  const gps = gpsResult.status === 'fulfilled' ? gpsResult.value : null;
+  const exif = exifResult.status === 'fulfilled' ? exifResult.value : null;
+  const lat = Number.isFinite(gps?.latitude) ? gps?.latitude ?? null : null;
+  const lng = Number.isFinite(gps?.longitude) ? gps?.longitude ?? null : null;
+
+  return {
+    lat,
+    lng,
+    takenAt: textValue(exif?.DateTimeOriginal || exif?.CreateDate) || null
+  };
 }
 
 function assertReadConfig(config) {
@@ -1237,11 +1256,14 @@ export async function saveSeatablePhoto(formData) {
   const file = formData.get('photo');
   assertFile(file);
 
-  const { lat, lng } = parseCoordinates(formData);
+  const providedCoordinates = parseCoordinates(formData);
+  const extractedMetadata = await extractUploadedPhotoMetadata(file);
+  const lat = providedCoordinates.lat ?? extractedMetadata.lat;
+  const lng = providedCoordinates.lng ?? extractedMetadata.lng;
 
   const id = randomUUID();
   const createdAt = new Date().toISOString();
-  const takenAt = textValue(formData.get('takenAt')) || null;
+  const takenAt = textValue(formData.get('takenAt')) || extractedMetadata.takenAt || null;
   const imageMime = textValue(file.type) || 'image/jpeg';
   const imageName = textValue(file.name) || `${id}.jpg`;
 
