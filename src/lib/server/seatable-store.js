@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { env as privateEnv } from '$env/dynamic/private';
-import * as exifr from 'exifr';
+import exifr from 'exifr';
 
 const DEFAULT_SERVER_URL = 'https://cloud.seatable.io';
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -437,21 +437,31 @@ function isFileLike(value) {
 }
 
 async function extractUploadedPhotoMetadata(file) {
-  const [gpsResult, exifResult] = await Promise.allSettled([
-    exifr.gps(file),
-    exifr.parse(file, ['DateTimeOriginal', 'CreateDate'])
-  ]);
+  try {
+    // Convert File to ArrayBuffer for server-side processing
+    const arrayBuffer = await file.arrayBuffer();
+    const exifResult = await exifr.parse(arrayBuffer, {
+      gps: true,
+      tags: ['DateTimeOriginal', 'CreateDate']
+    });
 
-  const gps = gpsResult.status === 'fulfilled' ? gpsResult.value : null;
-  const exif = exifResult.status === 'fulfilled' ? exifResult.value : null;
-  const lat = Number.isFinite(gps?.latitude) ? gps?.latitude ?? null : null;
-  const lng = Number.isFinite(gps?.longitude) ? gps?.longitude ?? null : null;
+    const gps = exifResult?.gps || null;
+    const lat = Number.isFinite(gps?.latitude) ? gps?.latitude ?? null : null;
+    const lng = Number.isFinite(gps?.longitude) ? gps?.longitude ?? null : null;
 
-  return {
-    lat,
-    lng,
-    takenAt: textValue(exif?.DateTimeOriginal || exif?.CreateDate) || null
-  };
+    return {
+      lat,
+      lng,
+      takenAt: textValue(exifResult?.DateTimeOriginal || exifResult?.CreateDate) || null
+    };
+  } catch (error) {
+    // If EXIF parsing fails, return empty metadata
+    return {
+      lat: null,
+      lng: null,
+      takenAt: null
+    };
+  }
 }
 
 function assertReadConfig(config) {

@@ -146,6 +146,8 @@
               </a>
             {:else}
               <div
+                role="button"
+                tabindex="0"
                 use:registerPhoto={photo.id}
                 class={`group block overflow-hidden  -black bg-white ${
                   activePhotoId === photo.id ? "ring-1 ring-black" : ""
