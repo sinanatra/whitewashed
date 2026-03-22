@@ -116,6 +116,6 @@ body {
 
 
 ::selection {
-  background: #fff;
-  color: #fff;
+  color: white;
+  background: black
 }

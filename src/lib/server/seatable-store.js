@@ -51,7 +51,8 @@ function getConfig() {
       imageUrl: String(readEnv('SEATABLE_COL_IMAGE_URL', 'image_url')),
       imageBase64: String(readEnv('SEATABLE_COL_IMAGE_BASE64', 'image_base64')),
       imageMime: String(readEnv('SEATABLE_COL_IMAGE_MIME', 'image_mime')),
-      imageName: String(readEnv('SEATABLE_COL_IMAGE_NAME', 'image_name'))
+      imageName: String(readEnv('SEATABLE_COL_IMAGE_NAME', 'image_name')),
+      public: String(readEnv('SEATABLE_COL_PUBLIC', 'public'))
     }
   };
 }
@@ -829,6 +830,7 @@ async function addRow(config, accessToken, baseUuid, row) {
   }
 }
 
+
 function withRetJsonParam(uploadLink, serverUrl) {
   const raw = String(uploadLink || '').trim();
   if (!raw) {
@@ -1045,7 +1047,6 @@ async function ensureTableSchema(config, accessToken, baseUuid) {
     .filter(Boolean);
   const requiredColumns = [
     config.columns.id,
-    config.columns.title,
     config.columns.description,
     config.columns.lat,
     config.columns.lng,
@@ -1263,8 +1264,17 @@ export async function listSeatablePhotos() {
   const schema = await ensureTableSchema(config, auth.accessToken, baseUuid);
   const rows = await listRows(config, auth.accessToken, baseUuid, schema);
 
+  const publicCol = config.columns.public;
+  const hasPublicCol = schema.availableColumnNames.has(publicCol);
+
   return rows
+    .filter((row) => {
+      if (!hasPublicCol) return true;
+      const val = getColumnValue(row, publicCol, schema, []);
+      return val === true || val === 1;
+    })
     .map((row) => rowToPhoto(config, row, schema))
+    .filter((photo) => photo.lat !== null && photo.lng !== null)
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
@@ -1323,6 +1333,7 @@ export async function saveSeatablePhoto(formData) {
   setIfColumnExists(config.columns.lng, lng);
   setIfColumnExists(config.columns.takenAt, takenAt);
   setIfColumnExists(config.columns.createdAt, createdAt);
+  setIfColumnExists(config.columns.public, false);
 
   let imageUrl = '';
   if (schema.hasImageColumn) {
@@ -1379,6 +1390,7 @@ export async function saveSeatablePhoto(formData) {
     imageUrl: imageUrl ? normalizeImageUrl(config, imageUrl) : ''
   };
 }
+
 
 export async function fetchSeatableAsset(sourceUrl) {
   const config = getConfig();

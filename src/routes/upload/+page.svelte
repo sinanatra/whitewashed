@@ -1,5 +1,27 @@
 <script>
-  import * as exifr from 'exifr';
+  import * as exifr from "exifr";
+  function createRevealSequence(text) {
+    const words = text.trim().split(/\s+/);
+    const ranked = words
+      .map((word, index) => {
+        let hash = 2166136261;
+        const source = `${word}-${index}`;
+        for (let i = 0; i < source.length; i += 1) {
+          hash ^= source.charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return { word, index, hash: hash >>> 0 };
+      })
+      .sort((a, b) => a.hash - b.hash)
+      .map((entry, order) => ({ ...entry, order }));
+    return words.map((word, index) => {
+      const match = ranked.find((entry) => entry.index === index);
+      return { word, order: match ? match.order : index };
+    });
+  }
+
+  const backWords = createRevealSequence('back');
+
 
   const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
   const TARGET_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -8,54 +30,42 @@
   const MIN_LONG_SIDE = 1400;
 
   let loading = false;
-  let error = '';
-  let success = '';
-  let optimizationNote = '';
+  let error = "";
+  let success = "";
+  let optimizationNote = "";
   let uploadFile = null;
   let originalUploadFile = null;
   let fileInput;
-  let uploadPassword = '';
-
   let formState = {
-    title: '',
-    description: '',
-    lat: '',
-    lng: '',
-    takenAt: ''
+    description: "",
+    lat: "",
+    lng: "",
+    takenAt: "",
   };
 
   function toLocalDatetimeValue(value) {
     const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) {
-      return '';
+      return "";
     }
 
-    const pad = (num) => String(num).padStart(2, '0');
+    const pad = (num) => String(num).padStart(2, "0");
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-  }
-
-  function titleFromFileName(fileName) {
-    const clean = String(fileName || '')
-      .replace(/\.[^.]+$/, '')
-      .replace(/[_-]+/g, ' ')
-      .trim();
-
-    return clean || 'Untitled';
   }
 
   async function readExifMetadata(file) {
     const [gpsResult, exifResult] = await Promise.allSettled([
       exifr.gps(file),
-      exifr.parse(file, ['DateTimeOriginal', 'CreateDate'])
+      exifr.parse(file, ["DateTimeOriginal", "CreateDate"]),
     ]);
 
-    const gps = gpsResult.status === 'fulfilled' ? gpsResult.value : null;
-    const exif = exifResult.status === 'fulfilled' ? exifResult.value : null;
+    const gps = gpsResult.status === "fulfilled" ? gpsResult.value : null;
+    const exif = exifResult.status === "fulfilled" ? exifResult.value : null;
 
     return {
       takenAt: exif?.DateTimeOriginal || exif?.CreateDate || null,
       latitude: gps?.latitude,
-      longitude: gps?.longitude
+      longitude: gps?.longitude,
     };
   }
 
@@ -86,15 +96,11 @@
     if (!file) {
       uploadFile = null;
       originalUploadFile = null;
-      optimizationNote = '';
+      optimizationNote = "";
       return;
     }
 
     originalUploadFile = file;
-
-    if (!formState.title) {
-      formState.title = titleFromFileName(file.name);
-    }
 
     if (!formState.takenAt && file.lastModified) {
       formState.takenAt = toLocalDatetimeValue(file.lastModified);
@@ -107,8 +113,8 @@
   }
 
   async function optimizeForUpload(file) {
-    if (!file.type.startsWith('image/') || file.type === 'image/gif') {
-      return { file, note: '' };
+    if (!file.type.startsWith("image/") || file.type === "image/gif") {
+      return { file, note: "" };
     }
 
     try {
@@ -124,7 +130,7 @@
 
       if (!shouldOptimize) {
         bitmap.close();
-        return { file, note: '' };
+        return { file, note: "" };
       }
 
       if (originalMaxSide > MAX_DIMENSION) {
@@ -133,22 +139,23 @@
         height = Math.max(1, Math.round(height * ratio));
       }
 
-      let quality = file.type === 'image/webp' ? 0.82 : 0.84;
+      let quality = file.type === "image/webp" ? 0.82 : 0.84;
       let blob = null;
       let attempts = 0;
-      let outputType = file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
-      let convertedToJpeg = outputType === 'image/jpeg' && file.type !== 'image/jpeg';
+      let outputType = file.type === "image/webp" ? "image/webp" : "image/jpeg";
+      let convertedToJpeg =
+        outputType === "image/jpeg" && file.type !== "image/jpeg";
 
       while (attempts < 12) {
         attempts += 1;
 
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (!ctx) {
           bitmap.close();
-          return { file, note: '' };
+          return { file, note: "" };
         }
         ctx.drawImage(bitmap, 0, 0, width, height);
 
@@ -169,11 +176,11 @@
 
         if (
           attempts >= 4 &&
-          outputType !== 'image/jpeg' &&
+          outputType !== "image/jpeg" &&
           (!blob || blob.size > MAX_UPLOAD_BYTES)
         ) {
-          outputType = 'image/jpeg';
-          convertedToJpeg = file.type !== 'image/jpeg';
+          outputType = "image/jpeg";
+          convertedToJpeg = file.type !== "image/jpeg";
           quality = 0.8;
         }
       }
@@ -181,38 +188,40 @@
       bitmap.close();
 
       if (!blob) {
-        return { file, note: '' };
+        return { file, note: "" };
       }
 
       if (blob.size > MAX_UPLOAD_BYTES) {
         return {
           file,
-          note: `Image is ${Math.round(file.size / (1024 * 1024) * 10) / 10}MB and could not be reduced enough automatically`
+          note: `Image is ${Math.round((file.size / (1024 * 1024)) * 10) / 10}MB and could not be reduced enough automatically`,
         };
       }
 
-      const extension = outputType === 'image/webp' ? 'webp' : 'jpg';
+      const extension = outputType === "image/webp" ? "webp" : "jpg";
       const optimized = new File(
         [blob],
-        `${file.name.replace(/\.[^.]+$/, '') || 'upload'}.${extension}`,
-        { type: outputType, lastModified: Date.now() }
+        `${file.name.replace(/\.[^.]+$/, "") || "upload"}.${extension}`,
+        { type: outputType, lastModified: Date.now() },
       );
 
       if (optimized.size >= file.size && file.size <= MAX_UPLOAD_BYTES) {
-        return { file, note: '' };
+        return { file, note: "" };
       }
 
       const beforeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
       const afterMb = Math.round((optimized.size / (1024 * 1024)) * 10) / 10;
       const resized = width !== originalWidth || height !== originalHeight;
-      const resizeNote = resized ? `, ${originalWidth}x${originalHeight} -> ${width}x${height}` : '';
-      const conversionNote = convertedToJpeg ? ', converted to JPEG' : '';
+      const resizeNote = resized
+        ? `, ${originalWidth}x${originalHeight} -> ${width}x${height}`
+        : "";
+      const conversionNote = convertedToJpeg ? ", converted to JPEG" : "";
       return {
         file: optimized,
-        note: `Optimized ${beforeMb}MB -> ${afterMb}MB${resizeNote}${conversionNote}`
+        note: `Optimized ${beforeMb}MB -> ${afterMb}MB${resizeNote}${conversionNote}`,
       };
     } catch {
-      return { file, note: '' };
+      return { file, note: "" };
     }
   }
 
@@ -224,7 +233,7 @@
 
   function useBrowserLocation() {
     if (!navigator.geolocation) {
-      error = 'Geolocation not supported';
+      error = "Geolocation not supported";
       return;
     }
 
@@ -234,56 +243,54 @@
         formState.lng = String(position.coords.longitude);
       },
       () => {
-        error = 'Unable to read current position';
+        error = "Unable to read current position";
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   }
 
   async function submit(event) {
     event.preventDefault();
     loading = true;
-    error = '';
-    success = '';
+    error = "";
+    success = "";
 
     try {
       if (!uploadFile) {
-        throw new Error('Select a photo first');
+        throw new Error("Select a photo first");
       }
       if (uploadFile.size > MAX_UPLOAD_BYTES) {
-        throw new Error('Image is larger than 10MB. Use a smaller photo or compress it first.');
+        throw new Error(
+          "Image is larger than 10MB. Use a smaller photo or compress it first.",
+        );
       }
 
       const formData = new FormData();
-      formData.set('photo', uploadFile);
+      formData.set("photo", uploadFile);
       if (originalUploadFile && originalUploadFile !== uploadFile) {
-        formData.set('photoMetadataSource', originalUploadFile);
+        formData.set("photoMetadataSource", originalUploadFile);
       }
-      formData.set('title', formState.title);
-      formData.set('description', formState.description);
-      formData.set('takenAt', formState.takenAt);
-      formData.set('lat', formState.lat);
-      formData.set('lng', formState.lng);
-      formData.set('password', uploadPassword);
-
-      const response = await fetch('/api/photos', {
-        method: 'POST',
-        body: formData
+      formData.set("description", formState.description);
+      formData.set("takenAt", formState.takenAt);
+      formData.set("lat", formState.lat);
+      formData.set("lng", formState.lng);
+      const response = await fetch("/api/photos", {
+        method: "POST",
+        body: formData,
       });
 
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.error || 'Upload failed');
+        throw new Error(payload.error || "Upload failed");
       }
 
-      success = 'Saved.';
-      formState = { title: '', description: '', lat: '', lng: '', takenAt: '' };
-      uploadPassword = '';
+      success = "Saved.";
+      formState = { description: "", lat: "", lng: "", takenAt: "" };
       uploadFile = null;
       originalUploadFile = null;
-      optimizationNote = '';
+      optimizationNote = "";
       if (fileInput) {
-        fileInput.value = '';
+        fileInput.value = "";
       }
     } catch (err) {
       error = err.message;
@@ -298,10 +305,41 @@
 </svelte:head>
 
 <main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-  <header class="mb-8 flex items-end justify-between border-b border-black pb-3">
-    <h1 class="text-2xl font-semibold tracking-tight"><span class="marker-text">Upload</span></h1>
-    <a href="/" class="text-sm underline underline-offset-4"><span class="marker-text">Back</span></a>
-  </header>
+  <a href="/" class="fixed left-4 top-4 z-10 text-xl">
+    <span class="marker-text">
+      {#each backWords as item, index}
+        <span class="marker-word" style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}>{item.word}</span>{index < backWords.length - 1 ? ' ' : ''}
+      {/each}
+    </span>
+  </a>
+
+  <div class="mb-6 space-y-1 text-xl text-black/60">
+    <p>
+      <span class="marker-text"
+        >Submit photos of pro-Palestinian graffiti and its erasure across
+        Berlin.</span
+      >
+    </p>
+    <p>
+      <span class="marker-text"
+        >Location coordinates are required. Photos without them won't appear on
+        the map and won't be published.</span
+      >
+    </p>
+    <p>
+      <span class="marker-text"
+        >If your photo doesn't have GPS metadata, use the "Use current location"
+        button or enter coordinates manually. You can find coordinates by
+        right-clicking any location on Google Maps.</span
+      >
+    </p>
+    <p>
+      <span class="marker-text"
+        >Use the description to add any context: street name, neighbourhood,
+        what was written, when it was removed.</span
+      >
+    </p>
+  </div>
 
   <form class="space-y-4" on:submit={submit}>
     <label class="block text-sm">
@@ -321,50 +359,76 @@
     {/if}
 
     <label class="block text-sm">
-      <span class="marker-text">Title</span>
-      <input name="title" bind:value={formState.title} class="mt-1 w-full border border-black px-3 py-2" required />
-    </label>
-
-    <label class="block text-sm">
-      <span class="marker-text">Upload password</span>
-      <input
-        name="password"
-        type="password"
-        bind:value={uploadPassword}
-        class="mt-1 w-full border border-black px-3 py-2"
-        autocomplete="current-password"
-        required
-      />
-    </label>
-
-    <label class="block text-sm">
       <span class="marker-text">Description</span>
-      <textarea name="description" bind:value={formState.description} rows="4" class="mt-1 w-full border border-black px-3 py-2"></textarea>
+      <textarea
+        name="description"
+        bind:value={formState.description}
+        rows="4"
+        class="mt-1 w-full border border-black px-3 py-2"
+      ></textarea>
     </label>
 
     <div class="grid gap-4 sm:grid-cols-2">
       <label class="block text-sm">
         <span class="marker-text">Taken at</span>
-        <input type="datetime-local" name="takenAt" bind:value={formState.takenAt} class="mt-1 w-full border border-black px-3 py-2" />
+        <input
+          type="datetime-local"
+          name="takenAt"
+          bind:value={formState.takenAt}
+          class="mt-1 w-full border border-black px-3 py-2"
+        />
       </label>
 
       <div class="pt-6">
-        <button type="button" on:click={useBrowserLocation} class="border border-black px-3 py-2 text-sm"><span class="marker-text">Use current location</span></button>
+        <button
+          type="button"
+          on:click={useBrowserLocation}
+          class="border border-black px-3 py-2 text-sm"
+          ><span class="marker-text">Use current location</span></button
+        >
       </div>
 
       <label class="block text-sm">
         <span class="marker-text">Latitude</span>
-        <input type="number" step="any" min="-90" max="90" name="lat" bind:value={formState.lat} class="mt-1 w-full border border-black px-3 py-2" />
+        <input
+          type="number"
+          step="any"
+          min="-90"
+          max="90"
+          name="lat"
+          bind:value={formState.lat}
+          placeholder="e.g. 52.5200"
+          class="mt-1 w-full border border-black px-3 py-2"
+        />
       </label>
 
       <label class="block text-sm">
         <span class="marker-text">Longitude</span>
-        <input type="number" step="any" min="-180" max="180" name="lng" bind:value={formState.lng} class="mt-1 w-full border border-black px-3 py-2" />
+        <input
+          type="number"
+          step="any"
+          min="-180"
+          max="180"
+          name="lng"
+          bind:value={formState.lng}
+          placeholder="e.g. 13.4050"
+          class="mt-1 w-full border border-black px-3 py-2"
+        />
       </label>
+
+      {#if !formState.lat || !formState.lng}
+        <p class="col-span-2 text-sm text-black/50">
+          <span class="marker-text">No coordinates detected.</span>
+        </p>
+      {/if}
     </div>
 
-    <button type="submit" disabled={loading} class="border border-black px-4 py-2 text-sm">
-      <span class="marker-text">{loading ? 'Saving...' : 'Save'}</span>
+    <button
+      type="submit"
+      disabled={loading}
+      class="border border-black px-4 py-2 text-sm"
+    >
+      <span class="marker-text">{loading ? "Saving..." : "Save"}</span>
     </button>
 
     {#if error}

@@ -1,6 +1,4 @@
 <script>
-  import { submissionFormUrl } from "$lib/constants/submission.js";
-
   function createRevealSequence(text) {
     const words = text.trim().split(/\s+/);
     const ranked = words
@@ -27,7 +25,7 @@
   const promptWords = createRevealSequence(
     "Have an image to add to the archive?",
   );
-  const formWords = createRevealSequence("Submit through this form");
+  const formWords = createRevealSequence("Upload a photo here");
 </script>
 
 <footer
@@ -48,9 +46,7 @@
       </span>
     </p>
     <a
-      href={submissionFormUrl}
-      target="_blank"
-      rel="noreferrer"
+      href="/upload"
       class="text-white underline underline-offset-4"
     >
       <span class="marker-text">

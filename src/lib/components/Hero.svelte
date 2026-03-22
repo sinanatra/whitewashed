@@ -1,6 +1,4 @@
 <script>
-  import { submissionFormUrl } from "$lib/constants/submission.js";
-
   function createRevealSequence(text) {
     const words = text.trim().split(/\s+/);
     const ranked = words
@@ -35,9 +33,7 @@
 
 <div class="absolute right-0 top-0 z-10">
   <a
-    href={submissionFormUrl}
-    target="_blank"
-    rel="noreferrer"
+    href="/upload"
     class="inline-flex items-center justify-center text-xl text-white transition hover:bg-neutral-900"
   >
     <span class="marker-text">
