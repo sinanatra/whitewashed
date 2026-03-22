@@ -244,24 +244,12 @@
     });
   }
 
-  async function useBrowserLocation() {
+  function useBrowserLocation() {
     error = "";
 
     if (!navigator.geolocation) {
       error = "Geolocation not supported by this browser.";
       return;
-    }
-
-    if (navigator.permissions) {
-      try {
-        const status = await navigator.permissions.query({ name: "geolocation" });
-        if (status.state === "denied") {
-          error = "Location access is blocked. Go to your phone Settings → Apps → Chrome → Permissions → Location → Allow.";
-          return;
-        }
-      } catch {
-        // permissions API not supported, proceed anyway
-      }
     }
 
     navigator.geolocation.getCurrentPosition(
