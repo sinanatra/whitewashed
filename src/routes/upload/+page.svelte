@@ -20,8 +20,7 @@
     });
   }
 
-  const backWords = createRevealSequence('back');
-
+  const backWords = createRevealSequence("back");
 
   const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
   const TARGET_UPLOAD_BYTES = 2 * 1024 * 1024;
@@ -173,7 +172,11 @@
           break;
         }
 
-        if (attempts >= 4 && outputType !== "image/jpeg" && (!blob || blob.size > MAX_UPLOAD_BYTES)) {
+        if (
+          attempts >= 4 &&
+          outputType !== "image/jpeg" &&
+          (!blob || blob.size > MAX_UPLOAD_BYTES)
+        ) {
           outputType = "image/jpeg";
           quality = 0.8;
         }
@@ -222,9 +225,11 @@
       (err) => {
         locationSource = "";
         if (err.code === 1) {
-          error = "Location denied. Go to phone Settings → Apps → Chrome → Permissions → Location → Allow.";
+          error =
+            "Location denied. Go to phone Settings → Apps → Chrome → Permissions → Location → Allow.";
         } else if (err.code === 3) {
-          error = "Location timed out. Try again or enter coordinates manually.";
+          error =
+            "Location timed out. Try again or enter coordinates manually.";
         } else {
           error = "Could not get location. Enter coordinates manually.";
         }
@@ -291,7 +296,11 @@
   <a href="/" class="mb-6 block text-xl">
     <span class="marker-text">
       {#each backWords as item, index}
-        <span class="marker-word" style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}>{item.word}</span>{index < backWords.length - 1 ? ' ' : ''}
+        <span
+          class="marker-word"
+          style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}
+          >{item.word}</span
+        >{index < backWords.length - 1 ? " " : ""}
       {/each}
     </span>
   </a>
@@ -306,15 +315,9 @@
     <p>
       <span class="marker-text"
         >Location coordinates are required. Photos without them won't appear on
-        the map and won't be published.</span
-      >
-    </p>
-    <p>
-      <span class="marker-text"
-        >If your photo doesn't have GPS metadata, use the "Use current location"
-        button or enter coordinates manually. You can find coordinates by
-        right-clicking any location on Google Maps.</span
-      >
+        the map and won't be published. If your photo doesn't have GPS metadata,
+        use the "Use current location" button or enter coordinates manually.
+      </span>
     </p>
     <p>
       <span class="marker-text"
@@ -322,13 +325,16 @@
         what was written, when it was removed.</span
       >
     </p>
+    <p><span class="marker-text">Thank you.</span></p>
   </div>
 
   <form class="space-y-4" on:submit={submit}>
     <div class="block text-sm">
       <span class="marker-text">Photo</span>
       <div class="mt-1 grid grid-cols-2 gap-2">
-        <label class="cursor-pointer border border-black px-3 py-2 text-center text-sm">
+        <label
+          class="cursor-pointer border border-black px-3 py-2 text-center text-sm"
+        >
           <span class="marker-text">Choose from gallery</span>
           <input
             name="photo"
@@ -339,7 +345,9 @@
             class="sr-only"
           />
         </label>
-        <label class="cursor-pointer border border-black px-3 py-2 text-center text-sm">
+        <label
+          class="cursor-pointer border border-black px-3 py-2 text-center text-sm"
+        >
           <span class="marker-text">Take a photo</span>
           <input
             type="file"
@@ -382,9 +390,13 @@
           ><span class="marker-text">Use current location</span></button
         >
         {#if locationSource === "device"}
-          <span class="text-xs text-black/50"><span class="marker-text">from device</span></span>
+          <span class="text-xs text-black/50"
+            ><span class="marker-text">from device</span></span
+          >
         {:else if locationSource === "photo"}
-          <span class="text-xs text-black/50"><span class="marker-text">from photo</span></span>
+          <span class="text-xs text-black/50"
+            ><span class="marker-text">from photo</span></span
+          >
         {/if}
       </div>
 
@@ -418,7 +430,10 @@
 
       {#if (!formState.lat || !formState.lng) && uploadFile}
         <p class="col-span-2 text-sm text-black/50">
-          <span class="marker-text">No location found — allow location access when prompted, or enter coordinates manually.</span>
+          <span class="marker-text"
+            >No location found — allow location access when prompted, or enter
+            coordinates manually.</span
+          >
         </p>
       {/if}
     </div>

@@ -1,6 +1,19 @@
 import { json } from '@sveltejs/kit';
 import { getSeatableStatus, listSeatablePhotos, saveSeatablePhoto } from '$lib/server/seatable-store';
 
+const uploadAttempts = new Map();
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const attempts = (uploadAttempts.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (attempts.length >= RATE_LIMIT_MAX) return true;
+  attempts.push(now);
+  uploadAttempts.set(ip, attempts);
+  return false;
+}
+
 const SAFE_UPLOAD_ERRORS = new Set([
   'Latitude and longitude must be provided together',
   'Invalid coordinates',
@@ -41,6 +54,11 @@ export async function GET() {
 
 export async function POST({ request }) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
+    if (isRateLimited(ip)) {
+      return json({ error: 'Too many uploads. Try again later.' }, { status: 429 });
+    }
+
     const seatable = getSeatableStatus();
     if (!seatable.configured) {
       return json({ error: 'Config issue' }, { status: 503 });
