@@ -18,7 +18,7 @@ const SAFE_UPLOAD_ERRORS = new Set([
   'Latitude and longitude must be provided together',
   'Invalid coordinates',
   'Missing file',
-  'File too large (max 10MB)'
+  'File too large (max 4MB)'
 ]);
 
 function proxifyPhotoImageUrl(imageUrl) {

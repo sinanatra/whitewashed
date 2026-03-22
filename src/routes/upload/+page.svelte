@@ -22,11 +22,11 @@
 
   const backWords = createRevealSequence("back");
 
-  const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-  const TARGET_UPLOAD_BYTES = 2 * 1024 * 1024;
-  const OPTIMIZE_TRIGGER_BYTES = 2 * 1024 * 1024;
-  const MAX_DIMENSION = 2200;
-  const MIN_LONG_SIDE = 1400;
+  const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+  const TARGET_UPLOAD_BYTES = 500 * 1024;
+  const OPTIMIZE_TRIGGER_BYTES = 200 * 1024;
+  const MAX_DIMENSION = 1600;
+  const MIN_LONG_SIDE = 900;
 
   let loading = false;
   let error = "";
@@ -139,7 +139,7 @@
         height = Math.max(1, Math.round(height * ratio));
       }
 
-      let quality = file.type === "image/webp" ? 0.82 : 0.84;
+      let quality = file.type === "image/webp" ? 0.72 : 0.74;
       let blob = null;
       let attempts = 0;
       let outputType = file.type === "image/webp" ? "image/webp" : "image/jpeg";
@@ -162,8 +162,8 @@
           break;
         }
 
-        if (quality > 0.66) {
-          quality = Math.max(0.66, quality - 0.05);
+        if (quality > 0.45) {
+          quality = Math.max(0.45, quality - 0.06);
         } else if (Math.max(width, height) > MIN_LONG_SIDE) {
           width = Math.max(1, Math.round(width * 0.86));
           height = Math.max(1, Math.round(height * 0.86));
@@ -250,7 +250,7 @@
       }
       if (uploadFile.size > MAX_UPLOAD_BYTES) {
         throw new Error(
-          "Image is larger than 10MB. Use a smaller photo or compress it first.",
+          "Image is larger than 4MB. Use a smaller photo or compress it first.",
         );
       }
 
