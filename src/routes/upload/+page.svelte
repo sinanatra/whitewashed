@@ -55,9 +55,10 @@
   }
 
   async function readExifMetadata(file) {
+    const buffer = await file.arrayBuffer();
     const [gpsResult, exifResult] = await Promise.allSettled([
-      exifr.gps(file),
-      exifr.parse(file, ["DateTimeOriginal", "CreateDate"]),
+      exifr.gps(buffer),
+      exifr.parse(buffer, ["DateTimeOriginal", "CreateDate"]),
     ]);
 
     const gps = gpsResult.status === "fulfilled" ? gpsResult.value : null;
@@ -234,10 +235,22 @@
     });
   }
 
-  function useBrowserLocation() {
+  async function useBrowserLocation() {
     if (!navigator.geolocation) {
-      error = "Geolocation not supported";
+      error = "Geolocation not supported by this browser.";
       return;
+    }
+
+    if (navigator.permissions) {
+      try {
+        const status = await navigator.permissions.query({ name: "geolocation" });
+        if (status.state === "denied") {
+          error = "Location access is blocked. To fix this: open your browser or phone Settings → find this site or Chrome → Permissions → Location → Allow.";
+          return;
+        }
+      } catch {
+        // permissions API not supported, proceed anyway
+      }
     }
 
     navigator.geolocation.getCurrentPosition(
@@ -245,9 +258,17 @@
         formState.lat = String(position.coords.latitude);
         formState.lng = String(position.coords.longitude);
         locationSource = "device";
+        error = "";
       },
-      () => {
+      (err) => {
         locationSource = "";
+        if (err.code === 1) {
+          error = "Location access denied. Open Settings → Chrome (or this app) → Permissions → Location → Allow.";
+        } else if (err.code === 3) {
+          error = "Location request timed out. Try again or enter coordinates manually.";
+        } else {
+          error = "Could not get location. Enter coordinates manually.";
+        }
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
