@@ -36,6 +36,7 @@
   let uploadFile = null;
   let originalUploadFile = null;
   let fileInput;
+  let locationSource = "";
   let formState = {
     description: "",
     lat: "",
@@ -79,6 +80,7 @@
 
       if (!formState.lat && Number.isFinite(exif?.latitude)) {
         formState.lat = String(exif.latitude);
+        locationSource = "photo";
       }
 
       if (!formState.lng && Number.isFinite(exif?.longitude)) {
@@ -86,6 +88,10 @@
       }
     } catch {
       // ignore missing EXIF
+    }
+
+    if (!formState.lat || !formState.lng) {
+      useBrowserLocation();
     }
   }
 
@@ -241,9 +247,10 @@
       (position) => {
         formState.lat = String(position.coords.latitude);
         formState.lng = String(position.coords.longitude);
+        locationSource = "device";
       },
       () => {
-        error = "Unable to read current position";
+        locationSource = "";
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -289,6 +296,7 @@
       uploadFile = null;
       originalUploadFile = null;
       optimizationNote = "";
+      locationSource = "";
       if (fileInput) {
         fileInput.value = "";
       }
@@ -305,7 +313,7 @@
 </svelte:head>
 
 <main class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-  <a href="/" class="fixed left-4 top-4 z-10 text-xl">
+  <a href="/" class="mb-6 block text-xl">
     <span class="marker-text">
       {#each backWords as item, index}
         <span class="marker-word" style={`--word-order:${item.order};--marker-sequence-delay:0ms;`}>{item.word}</span>{index < backWords.length - 1 ? ' ' : ''}
@@ -379,13 +387,18 @@
         />
       </label>
 
-      <div class="pt-6">
+      <div class="pt-6 flex items-center gap-3">
         <button
           type="button"
           on:click={useBrowserLocation}
           class="border border-black px-3 py-2 text-sm"
           ><span class="marker-text">Use current location</span></button
         >
+        {#if locationSource === "device"}
+          <span class="text-xs text-black/50"><span class="marker-text">from device</span></span>
+        {:else if locationSource === "photo"}
+          <span class="text-xs text-black/50"><span class="marker-text">from photo</span></span>
+        {/if}
       </div>
 
       <label class="block text-sm">
@@ -416,9 +429,9 @@
         />
       </label>
 
-      {#if !formState.lat || !formState.lng}
+      {#if (!formState.lat || !formState.lng) && uploadFile}
         <p class="col-span-2 text-sm text-black/50">
-          <span class="marker-text">No coordinates detected.</span>
+          <span class="marker-text">No location found — allow location access when prompted, or enter coordinates manually.</span>
         </p>
       {/if}
     </div>
