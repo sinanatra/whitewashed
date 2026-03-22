@@ -36,6 +36,7 @@
   let uploadFile = null;
   let originalUploadFile = null;
   let fileInput;
+  let cameraFileInput;
   let locationSource = "";
   let exifDebug = "";
   let formState = {
@@ -326,9 +327,8 @@
       optimizationNote = "";
       locationSource = "";
       exifDebug = "";
-      if (fileInput) {
-        fileInput.value = "";
-      }
+      if (fileInput) fileInput.value = "";
+      if (cameraFileInput) cameraFileInput.value = "";
     } catch (err) {
       error = err.message;
     } finally {
@@ -379,18 +379,36 @@
   </div>
 
   <form class="space-y-4" on:submit={submit}>
-    <label class="block text-sm">
+    <div class="block text-sm">
       <span class="marker-text">Photo</span>
-      <input
-        name="photo"
-        type="file"
-        accept="image/*"
-        bind:this={fileInput}
-        on:change={onFileChange}
-        class="mt-1 w-full border border-black px-3 py-2"
-        required
-      />
-    </label>
+      <div class="mt-1 grid grid-cols-2 gap-2">
+        <label class="cursor-pointer border border-black px-3 py-2 text-center text-sm">
+          <span class="marker-text">Choose from gallery</span>
+          <input
+            name="photo"
+            type="file"
+            accept="image/*"
+            bind:this={fileInput}
+            on:change={onFileChange}
+            class="sr-only"
+          />
+        </label>
+        <label class="cursor-pointer border border-black px-3 py-2 text-center text-sm">
+          <span class="marker-text">Take a photo</span>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            bind:this={cameraFileInput}
+            on:change={onFileChange}
+            class="sr-only"
+          />
+        </label>
+      </div>
+      {#if uploadFile}
+        <p class="mt-1 text-xs text-black/50"><span class="marker-text">Photo selected</span></p>
+      {/if}
+    </div>
     {#if exifDebug}
       <p class="text-xs text-black/40"><span class="marker-text">{exifDebug}</span></p>
     {/if}
