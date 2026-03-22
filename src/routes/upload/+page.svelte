@@ -37,6 +37,7 @@
   let originalUploadFile = null;
   let fileInput;
   let locationSource = "";
+  let exifDebug = "";
   let formState = {
     description: "",
     lat: "",
@@ -56,24 +57,32 @@
 
   async function readExifMetadata(file) {
     const buffer = await file.arrayBuffer();
-    const [gpsResult, exifResult] = await Promise.allSettled([
-      exifr.gps(buffer),
-      exifr.parse(buffer, ["DateTimeOriginal", "CreateDate"]),
-    ]);
-
-    const gps = gpsResult.status === "fulfilled" ? gpsResult.value : null;
-    const exif = exifResult.status === "fulfilled" ? exifResult.value : null;
-
+    const parsed = await exifr.parse(buffer, {
+      gps: true,
+      exif: true,
+      ifd0: true,
+      reviveValues: true,
+      translateKeys: true,
+      translateValues: true,
+      mergeOutput: true,
+    });
     return {
-      takenAt: exif?.DateTimeOriginal || exif?.CreateDate || null,
-      latitude: gps?.latitude,
-      longitude: gps?.longitude,
+      takenAt: parsed?.DateTimeOriginal || parsed?.CreateDate || null,
+      latitude: parsed?.latitude,
+      longitude: parsed?.longitude,
+      _raw: parsed,
     };
   }
 
   async function applyExif(file) {
     try {
       const exif = await readExifMetadata(file);
+
+      const hasGps = Number.isFinite(exif?.latitude) && Number.isFinite(exif?.longitude);
+      const hasDate = !!exif?.takenAt;
+      exifDebug = exif._raw
+        ? `EXIF found — GPS: ${hasGps ? `${exif.latitude?.toFixed(4)}, ${exif.longitude?.toFixed(4)}` : "none"} — Date: ${hasDate ? "yes" : "no"}`
+        : "No EXIF data found in this file";
 
       if (!formState.takenAt && exif?.takenAt) {
         formState.takenAt = toLocalDatetimeValue(exif.takenAt);
@@ -87,10 +96,9 @@
       if (!formState.lng && Number.isFinite(exif?.longitude)) {
         formState.lng = String(exif.longitude);
       }
-    } catch {
-      // ignore missing EXIF
+    } catch (e) {
+      exifDebug = `EXIF error: ${e?.message || e}`;
     }
-
   }
 
   async function onFileChange(event) {
@@ -315,6 +323,7 @@
       originalUploadFile = null;
       optimizationNote = "";
       locationSource = "";
+      exifDebug = "";
       if (fileInput) {
         fileInput.value = "";
       }
@@ -380,6 +389,9 @@
         required
       />
     </label>
+    {#if exifDebug}
+      <p class="text-xs text-black/40"><span class="marker-text">{exifDebug}</span></p>
+    {/if}
     {#if optimizationNote}
       <p class="text-sm"><span class="marker-text">{optimizationNote}</span></p>
     {/if}
