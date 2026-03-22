@@ -90,9 +90,6 @@
       // ignore missing EXIF
     }
 
-    if (!formState.lat || !formState.lng) {
-      useBrowserLocation();
-    }
   }
 
   async function onFileChange(event) {
