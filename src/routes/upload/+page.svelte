@@ -32,13 +32,11 @@
   let loading = false;
   let error = "";
   let success = "";
-  let optimizationNote = "";
   let uploadFile = null;
   let originalUploadFile = null;
   let fileInput;
   let cameraFileInput;
   let locationSource = "";
-  let exifDebug = "";
   let formState = {
     description: "",
     lat: "",
@@ -71,19 +69,12 @@
       takenAt: parsed?.DateTimeOriginal || parsed?.CreateDate || null,
       latitude: parsed?.latitude,
       longitude: parsed?.longitude,
-      _raw: parsed,
     };
   }
 
   async function applyExif(file) {
     try {
       const exif = await readExifMetadata(file);
-
-      const hasGps = Number.isFinite(exif?.latitude) && Number.isFinite(exif?.longitude);
-      const hasDate = !!exif?.takenAt;
-      exifDebug = exif._raw
-        ? `EXIF found — GPS: ${hasGps ? `${exif.latitude?.toFixed(4)}, ${exif.longitude?.toFixed(4)}` : "none"} — Date: ${hasDate ? "yes" : "no"}`
-        : "No EXIF data found in this file";
 
       if (!formState.takenAt && exif?.takenAt) {
         formState.takenAt = toLocalDatetimeValue(exif.takenAt);
@@ -97,8 +88,8 @@
       if (!formState.lng && Number.isFinite(exif?.longitude)) {
         formState.lng = String(exif.longitude);
       }
-    } catch (e) {
-      exifDebug = `EXIF error: ${e?.message || e}`;
+    } catch {
+      // ignore missing EXIF
     }
   }
 
@@ -109,7 +100,6 @@
     if (!file) {
       uploadFile = null;
       originalUploadFile = null;
-      optimizationNote = "";
       return;
     }
 
@@ -120,14 +110,12 @@
     }
 
     await applyExif(file);
-    const optimized = await optimizeForUpload(file);
-    uploadFile = optimized.file;
-    optimizationNote = optimized.note;
+    uploadFile = await optimizeForUpload(file);
   }
 
   async function optimizeForUpload(file) {
     if (!file.type.startsWith("image/") || file.type === "image/gif") {
-      return { file, note: "" };
+      return file;
     }
 
     try {
@@ -143,7 +131,7 @@
 
       if (!shouldOptimize) {
         bitmap.close();
-        return { file, note: "" };
+        return file;
       }
 
       if (originalMaxSide > MAX_DIMENSION) {
@@ -156,8 +144,6 @@
       let blob = null;
       let attempts = 0;
       let outputType = file.type === "image/webp" ? "image/webp" : "image/jpeg";
-      let convertedToJpeg =
-        outputType === "image/jpeg" && file.type !== "image/jpeg";
 
       while (attempts < 12) {
         attempts += 1;
@@ -168,7 +154,7 @@
         const ctx = canvas.getContext("2d");
         if (!ctx) {
           bitmap.close();
-          return { file, note: "" };
+          return file;
         }
         ctx.drawImage(bitmap, 0, 0, width, height);
 
@@ -187,28 +173,16 @@
           break;
         }
 
-        if (
-          attempts >= 4 &&
-          outputType !== "image/jpeg" &&
-          (!blob || blob.size > MAX_UPLOAD_BYTES)
-        ) {
+        if (attempts >= 4 && outputType !== "image/jpeg" && (!blob || blob.size > MAX_UPLOAD_BYTES)) {
           outputType = "image/jpeg";
-          convertedToJpeg = file.type !== "image/jpeg";
           quality = 0.8;
         }
       }
 
       bitmap.close();
 
-      if (!blob) {
-        return { file, note: "" };
-      }
-
-      if (blob.size > MAX_UPLOAD_BYTES) {
-        return {
-          file,
-          note: `Image is ${Math.round((file.size / (1024 * 1024)) * 10) / 10}MB and could not be reduced enough automatically`,
-        };
+      if (!blob || blob.size > MAX_UPLOAD_BYTES) {
+        return file;
       }
 
       const extension = outputType === "image/webp" ? "webp" : "jpg";
@@ -218,23 +192,9 @@
         { type: outputType, lastModified: Date.now() },
       );
 
-      if (optimized.size >= file.size && file.size <= MAX_UPLOAD_BYTES) {
-        return { file, note: "" };
-      }
-
-      const beforeMb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
-      const afterMb = Math.round((optimized.size / (1024 * 1024)) * 10) / 10;
-      const resized = width !== originalWidth || height !== originalHeight;
-      const resizeNote = resized
-        ? `, ${originalWidth}x${originalHeight} -> ${width}x${height}`
-        : "";
-      const conversionNote = convertedToJpeg ? ", converted to JPEG" : "";
-      return {
-        file: optimized,
-        note: `Optimized ${beforeMb}MB -> ${afterMb}MB${resizeNote}${conversionNote}`,
-      };
+      return optimized.size < file.size ? optimized : file;
     } catch {
-      return { file, note: "" };
+      return file;
     }
   }
 
@@ -312,9 +272,7 @@
       formState = { description: "", lat: "", lng: "", takenAt: "" };
       uploadFile = null;
       originalUploadFile = null;
-      optimizationNote = "";
       locationSource = "";
-      exifDebug = "";
       if (fileInput) fileInput.value = "";
       if (cameraFileInput) cameraFileInput.value = "";
     } catch (err) {
@@ -393,16 +351,7 @@
           />
         </label>
       </div>
-      {#if uploadFile}
-        <p class="mt-1 text-xs text-black/50"><span class="marker-text">Photo selected</span></p>
-      {/if}
     </div>
-    {#if exifDebug}
-      <p class="text-xs text-black/40"><span class="marker-text">{exifDebug}</span></p>
-    {/if}
-    {#if optimizationNote}
-      <p class="text-sm"><span class="marker-text">{optimizationNote}</span></p>
-    {/if}
 
     <label class="block text-sm">
       <span class="marker-text">Description</span>
