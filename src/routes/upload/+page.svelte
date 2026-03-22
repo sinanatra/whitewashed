@@ -244,6 +244,8 @@
   }
 
   async function useBrowserLocation() {
+    error = "";
+
     if (!navigator.geolocation) {
       error = "Geolocation not supported by this browser.";
       return;
@@ -253,7 +255,7 @@
       try {
         const status = await navigator.permissions.query({ name: "geolocation" });
         if (status.state === "denied") {
-          error = "Location access is blocked. To fix this: open your browser or phone Settings → find this site or Chrome → Permissions → Location → Allow.";
+          error = "Location access is blocked. Go to your phone Settings → Apps → Chrome → Permissions → Location → Allow.";
           return;
         }
       } catch {
@@ -271,14 +273,14 @@
       (err) => {
         locationSource = "";
         if (err.code === 1) {
-          error = "Location access denied. Open Settings → Chrome (or this app) → Permissions → Location → Allow.";
+          error = "Location denied. Go to phone Settings → Apps → Chrome → Permissions → Location → Allow.";
         } else if (err.code === 3) {
-          error = "Location request timed out. Try again or enter coordinates manually.";
+          error = "Location timed out. Try again or enter coordinates manually.";
         } else {
           error = "Could not get location. Enter coordinates manually.";
         }
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: false, timeout: 30000, maximumAge: 60000 },
     );
   }
 
