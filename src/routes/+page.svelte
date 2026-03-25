@@ -104,8 +104,17 @@
       </div>
     {:else}
       <section
-        class="mx-auto grid max-w-[1800px] xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] xl:items-start"
+        class="mx-auto grid max-w-[1800px] xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start"
       >
+        <div class="xl:sticky xl:top-2">
+          <ArchiveMap
+            {photos}
+            {activePhotoId}
+            on:hover={(event) => focusPhoto(event.detail.id)}
+            on:leave={clearActivePhoto}
+          />
+        </div>
+
         <div class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
           {#each photos as photo}
             {#if photo.imageUrl}
@@ -165,15 +174,6 @@
               </div>
             {/if}
           {/each}
-        </div>
-
-        <div class="xl:sticky xl:top-2">
-          <ArchiveMap
-            {photos}
-            {activePhotoId}
-            on:hover={(event) => focusPhoto(event.detail.id)}
-            on:leave={clearActivePhoto}
-          />
         </div>
       </section>
     {/if}
