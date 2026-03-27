@@ -106,7 +106,7 @@
       <section
         class="mx-auto grid max-w-[1800px] xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start"
       >
-        <div class="xl:sticky xl:top-2">
+        <div class="sticky top-0 z-10 xl:top-2">
           <ArchiveMap
             {photos}
             {activePhotoId}
@@ -144,7 +144,7 @@
                     class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
                       activePhotoId === photo.id
                         ? "grayscale-0"
-                        : "threshold-image"
+                        : "grayscale"
                     } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
                     loading="lazy"
                     decoding="async"

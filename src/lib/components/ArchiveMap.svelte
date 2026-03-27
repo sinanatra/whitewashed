@@ -24,9 +24,10 @@
   let isDragging = false;
   let center = DEFAULT_CENTER;
   let zoom = MIN_ZOOM;
-  let dragStart = null;
   let hasInitializedCenter = false;
   let hasInitializedZoom = false;
+  let activePointers = new Map();
+  let lastPinchDistance = null;
 
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
@@ -73,7 +74,7 @@
   }
 
   function setZoom(nextZoom, focusPoint = null) {
-    const clampedZoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+    const clampedZoom = clamp(Math.round(nextZoom), MIN_ZOOM, MAX_ZOOM);
     if (clampedZoom === zoom) {
       return;
     }
@@ -110,27 +111,44 @@
       return;
     }
 
-    isDragging = true;
     mapElement.setPointerCapture(event.pointerId);
-    dragStart = {
-      pointerX: event.clientX,
-      pointerY: event.clientY,
-      world: projectToWorld(center.lat, center.lng, zoom),
-    };
+    activePointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+
+    if (activePointers.size === 1) {
+      isDragging = true;
+      lastPinchDistance = null;
+    } else if (activePointers.size >= 2) {
+      isDragging = false;
+      const [p1, p2] = [...activePointers.values()];
+      lastPinchDistance = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+    }
   }
 
   function handlePointerMove(event) {
-    if (!isDragging || !dragStart) {
+    if (!activePointers.has(event.pointerId)) {
       return;
     }
 
-    const dx = event.clientX - dragStart.pointerX;
-    const dy = event.clientY - dragStart.pointerY;
-    const nextWorld = {
-      x: dragStart.world.x - dx,
-      y: dragStart.world.y - dy,
-    };
-    center = clampCenter(unprojectFromWorld(nextWorld.x, nextWorld.y, zoom));
+    const prev = activePointers.get(event.pointerId);
+    activePointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+
+    if (activePointers.size >= 2) {
+      const [p1, p2] = [...activePointers.values()];
+      const distance = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+
+      if (lastPinchDistance !== null && distance > 0) {
+        const midX = (p1.clientX + p2.clientX) / 2;
+        const midY = (p1.clientY + p2.clientY) / 2;
+        setZoom(zoom + Math.log2(distance / lastPinchDistance), { clientX: midX, clientY: midY });
+      }
+
+      lastPinchDistance = distance;
+    } else if (isDragging) {
+      const dx = event.clientX - prev.clientX;
+      const dy = event.clientY - prev.clientY;
+      const currentWorld = projectToWorld(center.lat, center.lng, zoom);
+      center = clampCenter(unprojectFromWorld(currentWorld.x - dx, currentWorld.y - dy, zoom));
+    }
   }
 
   function handlePointerUp(event) {
@@ -138,11 +156,20 @@
       return;
     }
 
-    isDragging = false;
-    dragStart = null;
-
     if (mapElement.hasPointerCapture(event.pointerId)) {
       mapElement.releasePointerCapture(event.pointerId);
+    }
+
+    activePointers.delete(event.pointerId);
+
+    if (activePointers.size === 0) {
+      isDragging = false;
+      lastPinchDistance = null;
+    } else if (activePointers.size === 1) {
+      isDragging = true;
+      lastPinchDistance = null;
+      const [pointerId] = [...activePointers.keys()];
+      try { mapElement.setPointerCapture(pointerId); } catch (_) {}
     }
   }
 
@@ -226,7 +253,7 @@
         bind:this={mapElement}
         bind:clientWidth={viewportWidth}
         bind:clientHeight={viewportHeight}
-        class={`relative h-[34rem] overflow-hidden  -black bg-neutral-200 ${
+        class={`relative h-[35vh] sm:h-[40rem] overflow-hidden touch-none -black bg-neutral-200 ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         role="application"
@@ -237,14 +264,13 @@
         on:pointercancel={handlePointerUp}
       >
         <div class="absolute inset-0 grayscale contrast-125">
-          {#each tiles as tile}
+          {#each tiles as tile (tile.key)}
             <img
               src={tile.src}
               alt=""
               class="absolute h-64 w-64 max-w-none select-none object-cover"
               style={`left:${tile.left}px;top:${tile.top}px;`}
               draggable="false"
-              loading="lazy"
             />
           {/each}
           <div class="absolute inset-0 bg-white/12"></div>
