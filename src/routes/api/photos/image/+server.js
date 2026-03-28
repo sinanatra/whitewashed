@@ -1,11 +1,34 @@
 import { fetchSeatableAsset, getSeatableStatus } from '$lib/server/seatable-store';
+import { env as privateEnv } from '$env/dynamic/private';
+
+const DEFAULT_SEATABLE_SERVER = 'https://cloud.seatable.io';
 
 function logServerError(error) {
   console.error('[api/photos/image] GET failed', error);
 }
 
-function isAbsoluteHttpUrl(value) {
-  return typeof value === 'string' && /^https?:\/\//i.test(value);
+function getAllowedHostname() {
+  const serverUrl = (
+    privateEnv.SEATABLE_SERVER_URL ||
+    process.env.SEATABLE_SERVER_URL ||
+    DEFAULT_SEATABLE_SERVER
+  ).replace(/\/$/, '');
+  try {
+    return new URL(serverUrl).hostname;
+  } catch {
+    return new URL(DEFAULT_SEATABLE_SERVER).hostname;
+  }
+}
+
+function isSeatableUrl(src) {
+  try {
+    const parsed = new URL(src);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    const allowed = getAllowedHostname();
+    return parsed.hostname === allowed || parsed.hostname.endsWith('.' + allowed);
+  } catch {
+    return false;
+  }
 }
 
 export async function GET({ url }) {
@@ -19,6 +42,12 @@ export async function GET({ url }) {
 
     if (!src) {
       return new Response('Missing src', { status: 400 });
+    }
+
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      if (!isSeatableUrl(src)) {
+        return new Response('Forbidden', { status: 403 });
+      }
     }
 
     const asset = await fetchSeatableAsset(src);
@@ -46,11 +75,6 @@ export async function GET({ url }) {
     });
   } catch (error) {
     logServerError(error);
-
-    if (isAbsoluteHttpUrl(src)) {
-      return Response.redirect(src, 302);
-    }
-
     return new Response('Image proxy error', { status: 502 });
   }
 }
