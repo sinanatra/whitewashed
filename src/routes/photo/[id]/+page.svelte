@@ -1,10 +1,10 @@
 <script>
   import { imageReady } from '$lib/actions/image-ready.js';
 
-  export let data;
+  let { data } = $props();
 
   const photo = data.photo;
-  let imageLoaded = false;
+  let imageLoaded = $state(false);
 
   function formatCoordinate(value) {
     const number = Number(value);
@@ -75,8 +75,8 @@
               imageLoaded ? 'image-resolve-loaded' : ''
             }`}
             decoding="async"
-            on:load={markLoaded}
-            on:error={tryDirectSource}
+            onload={markLoaded}
+            onerror={tryDirectSource}
           />
         </div>
       {:else}

@@ -28,20 +28,20 @@
   const MAX_DIMENSION = 1600;
   const MIN_LONG_SIDE = 900;
 
-  let loading = false;
-  let error = "";
-  let success = "";
-  let uploadFile = null;
-  let originalUploadFile = null;
-  let fileInput;
-  let cameraFileInput;
-  let locationSource = "";
-  let formState = {
+  let loading = $state(false);
+  let error = $state("");
+  let success = $state("");
+  let uploadFile = $state(null);
+  let originalUploadFile = $state(null);
+  let fileInput = $state();
+  let cameraFileInput = $state();
+  let locationSource = $state("");
+  let formState = $state({
     description: "",
     lat: "",
     lng: "",
     takenAt: "",
-  };
+  });
 
   function toLocalDatetimeValue(value) {
     const date = value instanceof Date ? value : new Date(value);
@@ -328,7 +328,7 @@
     <p><span class="marker-text">Thank you.</span></p>
   </div>
 
-  <form class="space-y-4" on:submit={submit}>
+  <form class="space-y-4" onsubmit={submit}>
     <div class="block text-sm">
       <span class="marker-text">Photo</span>
       <div class="mt-1 grid grid-cols-2 gap-2">
@@ -341,7 +341,7 @@
             type="file"
             accept="image/*"
             bind:this={fileInput}
-            on:change={onFileChange}
+            onchange={onFileChange}
             class="sr-only"
           />
         </label>
@@ -354,7 +354,7 @@
             accept="image/*"
             capture="environment"
             bind:this={cameraFileInput}
-            on:change={onFileChange}
+            onchange={onFileChange}
             class="sr-only"
           />
         </label>
@@ -385,7 +385,7 @@
       <div class="pt-6 flex items-center gap-3">
         <button
           type="button"
-          on:click={useBrowserLocation}
+          onclick={useBrowserLocation}
           class="border border-black px-3 py-2 text-sm"
           ><span class="marker-text">Use current location</span></button
         >

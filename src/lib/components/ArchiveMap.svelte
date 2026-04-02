@@ -1,8 +1,5 @@
 <script>
-  import { createEventDispatcher } from "svelte";
-
-  export let photos = [];
-  export let activePhotoId = "";
+  let { photos = [], activePhotoId = "", onhover, onleave } = $props();
 
   const TILE_SIZE = 256;
   const MIN_ZOOM = 10;
@@ -16,16 +13,14 @@
   const DEFAULT_CENTER = { lat: 52.52, lng: 13.405 };
   const MAX_MARKERS = 160;
 
-  const dispatch = createEventDispatcher();
-
-  let viewportWidth = 0;
-  let viewportHeight = 0;
-  let mapElement;
-  let isDragging = false;
-  let center = DEFAULT_CENTER;
-  let zoom = MIN_ZOOM;
-  let hasInitializedCenter = false;
-  let hasInitializedZoom = false;
+  let viewportWidth = $state(0);
+  let viewportHeight = $state(0);
+  let mapElement = $state();
+  let isDragging = $state(false);
+  let center = $state(DEFAULT_CENTER);
+  let zoom = $state(MIN_ZOOM);
+  let hasInitializedCenter = $state(false);
+  let hasInitializedZoom = $state(false);
   let activePointers = new Map();
   let lastPinchDistance = null;
 
@@ -95,7 +90,11 @@
 
     zoom = clampedZoom;
 
-    const nextFocusWorld = projectToWorld(focusLatLng.lat, focusLatLng.lng, clampedZoom);
+    const nextFocusWorld = projectToWorld(
+      focusLatLng.lat,
+      focusLatLng.lng,
+      clampedZoom,
+    );
 
     center = clampCenter(
       unprojectFromWorld(
@@ -112,7 +111,10 @@
     }
 
     mapElement.setPointerCapture(event.pointerId);
-    activePointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    activePointers.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
 
     if (activePointers.size === 1) {
       isDragging = true;
@@ -120,7 +122,10 @@
     } else if (activePointers.size >= 2) {
       isDragging = false;
       const [p1, p2] = [...activePointers.values()];
-      lastPinchDistance = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+      lastPinchDistance = Math.hypot(
+        p2.clientX - p1.clientX,
+        p2.clientY - p1.clientY,
+      );
     }
   }
 
@@ -130,16 +135,25 @@
     }
 
     const prev = activePointers.get(event.pointerId);
-    activePointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+    activePointers.set(event.pointerId, {
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
 
     if (activePointers.size >= 2) {
       const [p1, p2] = [...activePointers.values()];
-      const distance = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+      const distance = Math.hypot(
+        p2.clientX - p1.clientX,
+        p2.clientY - p1.clientY,
+      );
 
       if (lastPinchDistance !== null && distance > 0) {
         const midX = (p1.clientX + p2.clientX) / 2;
         const midY = (p1.clientY + p2.clientY) / 2;
-        setZoom(zoom + Math.log2(distance / lastPinchDistance), { clientX: midX, clientY: midY });
+        setZoom(zoom + Math.log2(distance / lastPinchDistance), {
+          clientX: midX,
+          clientY: midY,
+        });
       }
 
       lastPinchDistance = distance;
@@ -147,7 +161,9 @@
       const dx = event.clientX - prev.clientX;
       const dy = event.clientY - prev.clientY;
       const currentWorld = projectToWorld(center.lat, center.lng, zoom);
-      center = clampCenter(unprojectFromWorld(currentWorld.x - dx, currentWorld.y - dy, zoom));
+      center = clampCenter(
+        unprojectFromWorld(currentWorld.x - dx, currentWorld.y - dy, zoom),
+      );
     }
   }
 
@@ -169,7 +185,9 @@
       isDragging = true;
       lastPinchDistance = null;
       const [pointerId] = [...activePointers.keys()];
-      try { mapElement.setPointerCapture(pointerId); } catch (_) {}
+      try {
+        mapElement.setPointerCapture(pointerId);
+      } catch (_) {}
     }
   }
 
@@ -177,73 +195,91 @@
     setZoom(zoom + step);
   }
 
-  $: geotaggedPhotos = photos
-    .map((photo) => ({
-      ...photo,
-      lat: Number(photo.lat),
-      lng: Number(photo.lng),
-    }))
-    .filter(
-      (photo) => Number.isFinite(photo.lat) && Number.isFinite(photo.lng),
-    );
-
-  $: resolvedZoom = resolveZoom(geotaggedPhotos.length);
-  $: initialCenter = geotaggedPhotos.length
-    ? clampCenter({
-        lat:
-          geotaggedPhotos.reduce((sum, photo) => sum + photo.lat, 0) /
-          geotaggedPhotos.length,
-        lng:
-          geotaggedPhotos.reduce((sum, photo) => sum + photo.lng, 0) /
-          geotaggedPhotos.length,
-      })
-    : DEFAULT_CENTER;
-  $: if (!hasInitializedCenter) {
-    center = initialCenter;
-    hasInitializedCenter = true;
-  }
-  $: if (!hasInitializedZoom) {
-    zoom = resolvedZoom;
-    hasInitializedZoom = true;
-  }
-
-  $: centerWorld = projectToWorld(center.lat, center.lng, zoom);
-  $: halfWidth = viewportWidth / 2;
-  $: halfHeight = viewportHeight / 2;
-  $: startTileX = Math.floor((centerWorld.x - halfWidth) / TILE_SIZE);
-  $: endTileX = Math.floor((centerWorld.x + halfWidth) / TILE_SIZE);
-  $: startTileY = Math.floor((centerWorld.y - halfHeight) / TILE_SIZE);
-  $: endTileY = Math.floor((centerWorld.y + halfHeight) / TILE_SIZE);
-
-  $: tiles = Array.from(
-    {
-      length: Math.max(
-        0,
-        (endTileY - startTileY + 1) * (endTileX - startTileX + 1),
+  let geotaggedPhotos = $derived(
+    photos
+      .map((photo) => ({
+        ...photo,
+        lat: Number(photo.lat),
+        lng: Number(photo.lng),
+      }))
+      .filter(
+        (photo) => Number.isFinite(photo.lat) && Number.isFinite(photo.lng),
       ),
-    },
-    (_, index) => {
-      const widthCount = endTileX - startTileX + 1;
-      const x = startTileX + (index % widthCount);
-      const y = startTileY + Math.floor(index / widthCount);
-
-      return {
-        key: `${zoom}-${x}-${y}`,
-        left: x * TILE_SIZE - centerWorld.x + halfWidth,
-        top: y * TILE_SIZE - centerWorld.y + halfHeight,
-        src: `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`,
-      };
-    },
   );
 
-  $: markers = geotaggedPhotos.slice(0, MAX_MARKERS).map((photo) => {
-    const point = projectToWorld(photo.lat, photo.lng, zoom);
-    return {
-      ...photo,
-      left: point.x - centerWorld.x + halfWidth,
-      top: point.y - centerWorld.y + halfHeight,
-    };
+  let resolvedZoom = $derived(resolveZoom(geotaggedPhotos.length));
+  let initialCenter = $derived(
+    geotaggedPhotos.length
+      ? clampCenter({
+          lat:
+            geotaggedPhotos.reduce((sum, photo) => sum + photo.lat, 0) /
+            geotaggedPhotos.length,
+          lng:
+            geotaggedPhotos.reduce((sum, photo) => sum + photo.lng, 0) /
+            geotaggedPhotos.length,
+        })
+      : DEFAULT_CENTER,
+  );
+
+  $effect(() => {
+    if (!hasInitializedCenter) {
+      center = initialCenter;
+      hasInitializedCenter = true;
+    }
   });
+
+  $effect(() => {
+    if (!hasInitializedZoom) {
+      zoom = resolvedZoom;
+      hasInitializedZoom = true;
+    }
+  });
+
+  let centerWorld = $derived(projectToWorld(center.lat, center.lng, zoom));
+  let halfWidth = $derived(viewportWidth / 2);
+  let halfHeight = $derived(viewportHeight / 2);
+  let startTileX = $derived(
+    Math.floor((centerWorld.x - halfWidth) / TILE_SIZE),
+  );
+  let endTileX = $derived(Math.floor((centerWorld.x + halfWidth) / TILE_SIZE));
+  let startTileY = $derived(
+    Math.floor((centerWorld.y - halfHeight) / TILE_SIZE),
+  );
+  let endTileY = $derived(Math.floor((centerWorld.y + halfHeight) / TILE_SIZE));
+
+  let tiles = $derived(
+    Array.from(
+      {
+        length: Math.max(
+          0,
+          (endTileY - startTileY + 1) * (endTileX - startTileX + 1),
+        ),
+      },
+      (_, index) => {
+        const widthCount = endTileX - startTileX + 1;
+        const x = startTileX + (index % widthCount);
+        const y = startTileY + Math.floor(index / widthCount);
+
+        return {
+          key: `${zoom}-${x}-${y}`,
+          left: x * TILE_SIZE - centerWorld.x + halfWidth,
+          top: y * TILE_SIZE - centerWorld.y + halfHeight,
+          src: `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`,
+        };
+      },
+    ),
+  );
+
+  let markers = $derived(
+    geotaggedPhotos.slice(0, MAX_MARKERS).map((photo) => {
+      const point = projectToWorld(photo.lat, photo.lng, zoom);
+      return {
+        ...photo,
+        left: point.x - centerWorld.x + halfWidth,
+        top: point.y - centerWorld.y + halfHeight,
+      };
+    }),
+  );
 </script>
 
 <section class="flex bg-white">
@@ -258,10 +294,10 @@
         }`}
         role="application"
         aria-label="Interactive map of Berlin archive locations"
-        on:pointerdown={handlePointerDown}
-        on:pointermove={handlePointerMove}
-        on:pointerup={handlePointerUp}
-        on:pointercancel={handlePointerUp}
+        onpointerdown={handlePointerDown}
+        onpointermove={handlePointerMove}
+        onpointerup={handlePointerUp}
+        onpointercancel={handlePointerUp}
       >
         <div class="absolute inset-0 grayscale contrast-125">
           {#each tiles as tile (tile.key)}
@@ -283,19 +319,19 @@
         <div class="absolute right-4 top-4 z-10 flex flex-col gap-2">
           <button
             type="button"
-            class="flex h-8 w-8 items-center justify-center  -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom in"
-            on:click={() => zoomBy(1)}
-            on:pointerdown={(event) => event.stopPropagation()}
+            onclick={() => zoomBy(1)}
+            onpointerdown={(event) => event.stopPropagation()}
           >
             +
           </button>
           <button
             type="button"
-            class="flex h-8 w-8 items-center justify-center  -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
+            class="flex h-8 w-8 items-center justify-center -black bg-white text-xl leading-none text-black transition-colors hover:bg-black hover:text-white"
             aria-label="Zoom out"
-            on:click={() => zoomBy(-1)}
-            on:pointerdown={(event) => event.stopPropagation()}
+            onclick={() => zoomBy(-1)}
+            onpointerdown={(event) => event.stopPropagation()}
           >
             -
           </button>
@@ -308,18 +344,18 @@
               class="group absolute -translate-x-1/2 -translate-y-1/2"
               style={`left:${marker.left}px;top:${marker.top}px;`}
               aria-label={`Marker ${marker.title || marker.id}`}
-              on:mouseenter={() => dispatch("hover", { id: marker.id })}
-              on:mouseleave={() => dispatch("leave")}
-              on:focus={() => dispatch("hover", { id: marker.id })}
-              on:blur={() => dispatch("leave")}
+              onmouseenter={() => onhover?.({ id: marker.id })}
+              onmouseleave={() => onleave?.()}
+              onfocus={() => onhover?.({ id: marker.id })}
+              onblur={() => onleave?.()}
             >
               <span
-                class={`relative flex items-center justify-center rounded-full  -white bg-black transition-all duration-200 ${
-                  activePhotoId === marker.id ? "h-8 w-8" : "h-5 w-5"
+                class={`relative flex items-center justify-center rounded-full  -white bg-[#0000ff] transition-all duration-200 ${
+                  activePhotoId === marker.id ? "h-4 w-4" : "h-2 w-2"
                 }`}
               >
-              </span>
-            </button>
+              </span></button
+            >
           {/if}
         {/each}
       </div>

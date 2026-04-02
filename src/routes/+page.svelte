@@ -4,13 +4,13 @@
   import Footer from "$lib/components/Footer.svelte";
   import Hero from "$lib/components/Hero.svelte";
 
-  export let data;
+  let { data } = $props();
 
   const photos = data.photos ?? [];
   const loadError = data.error || "";
-  let activePhotoId = "";
+  let activePhotoId = $state("");
   const photoElements = new Map();
-  let loadedPhotoIds = {};
+  let loadedPhotoIds = $state({});
 
   function registerPhoto(node, photoId) {
     if (photoId) {
@@ -110,8 +110,8 @@
           <ArchiveMap
             {photos}
             {activePhotoId}
-            on:hover={(event) => focusPhoto(event.detail.id)}
-            on:leave={clearActivePhoto}
+            onhover={(event) => focusPhoto(event.id)}
+            onleave={clearActivePhoto}
           />
         </div>
 
@@ -125,10 +125,10 @@
                 use:registerPhoto={photo.id}
                 class={`group block overflow-hidden  -black bg-white ""
                 }`}
-                on:mouseenter={() => setActivePhoto(photo.id)}
-                on:mouseleave={clearActivePhoto}
-                on:focusin={() => setActivePhoto(photo.id)}
-                on:focusout={clearActivePhoto}
+                onmouseenter={() => setActivePhoto(photo.id)}
+                onmouseleave={clearActivePhoto}
+                onfocusin={() => setActivePhoto(photo.id)}
+                onfocusout={clearActivePhoto}
               >
                 <div class="image-frame aspect-[4/5] min-h-[200px] w-full">
                   <div
@@ -148,8 +148,8 @@
                     } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
                     loading="lazy"
                     decoding="async"
-                    on:load={() => markPhotoLoaded(photo.id)}
-                    on:error={tryDirectSource}
+                    onload={() => markPhotoLoaded(photo.id)}
+                    onerror={tryDirectSource}
                   />
                 </div>
               </a>
@@ -161,10 +161,10 @@
                 class={`group block overflow-hidden  -black bg-white ${
                   activePhotoId === photo.id ? "ring-1 ring-black" : ""
                 }`}
-                on:mouseenter={() => setActivePhoto(photo.id)}
-                on:mouseleave={clearActivePhoto}
-                on:focusin={() => setActivePhoto(photo.id)}
-                on:focusout={clearActivePhoto}
+                onmouseenter={() => setActivePhoto(photo.id)}
+                onmouseleave={clearActivePhoto}
+                onfocusin={() => setActivePhoto(photo.id)}
+                onfocusout={clearActivePhoto}
               >
                 <div
                   class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
