@@ -1,42 +1,17 @@
 <script>
-  import { imageReady } from "$lib/actions/image-ready.js";
   import ArchiveMap from "$lib/components/ArchiveMap.svelte";
   import DateRangeSlider from "$lib/components/DateRangeSlider.svelte";
   import Footer from "$lib/components/Footer.svelte";
   import Hero from "$lib/components/Hero.svelte";
+  import PhotoArchive from "$lib/components/PhotoArchive.svelte";
 
   let { data } = $props();
 
   const photos = data.photos ?? [];
   const loadError = data.error || "";
   let activePhotoId = $state("");
-  const photoElements = new Map();
-  let loadedPhotoIds = $state({});
-
-  function registerPhoto(node, photoId) {
-    if (photoId) {
-      photoElements.set(photoId, node);
-    }
-
-    return {
-      update(nextPhotoId) {
-        if (nextPhotoId !== photoId) {
-          if (photoId) {
-            photoElements.delete(photoId);
-          }
-          photoId = nextPhotoId;
-          if (photoId) {
-            photoElements.set(photoId, node);
-          }
-        }
-      },
-      destroy() {
-        if (photoId) {
-          photoElements.delete(photoId);
-        }
-      },
-    };
-  }
+  let archiveRef = $state();
+  let filteredPhotos = $state([]);
 
   function setActivePhoto(photoId) {
     activePhotoId = photoId || "";
@@ -48,43 +23,8 @@
 
   function focusPhoto(photoId) {
     setActivePhoto(photoId);
-
-    const node = photoElements.get(photoId);
-    if (!node) {
-      return;
-    }
-
-    node.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
+    archiveRef?.scrollToPhoto(photoId);
   }
-
-  function tryDirectSource(event) {
-    const img = event.currentTarget;
-    const src = String(img?.getAttribute("src") || "");
-    const marker = "/api/photos/image?src=";
-
-    if (!src.includes(marker)) {
-      return;
-    }
-
-    const encoded = src.split(marker)[1] || "";
-    const direct = decodeURIComponent(encoded);
-
-    if (!direct || direct === src) {
-      return;
-    }
-
-    img.src = direct;
-  }
-
-  function markPhotoLoaded(photoId) {
-    loadedPhotoIds = { ...loadedPhotoIds, [photoId]: true };
-  }
-
-  let filteredPhotos = $state([]);
 </script>
 
 <svelte:head>
@@ -135,66 +75,13 @@
 
           <DateRangeSlider {photos} bind:filteredPhotos />
 
-          <div
-            class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 bg-white z-10 h-full"
-          >
-            {#each filteredPhotos as photo}
-              {#if photo.imageUrl}
-                <a
-                  href={photo.imageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  use:registerPhoto={photo.id}
-                  class={`group block overflow-hidden  -black bg-white ""
-                }`}
-                  onmouseenter={() => setActivePhoto(photo.id)}
-                  onmouseleave={clearActivePhoto}
-                  onfocusin={() => setActivePhoto(photo.id)}
-                  onfocusout={clearActivePhoto}
-                >
-                  <div class="image-frame aspect-[4/5] min-h-[200px] w-full">
-                    <div
-                      class={`scan-overlay ${
-                        loadedPhotoIds[photo.id] ? "scan-overlay-hidden" : ""
-                      }`}
-                      aria-hidden="true"
-                    ></div>
-                    <img
-                      src={photo.imageUrl}
-                      alt={photo.title || "Archive photo"}
-                      use:imageReady={() => markPhotoLoaded(photo.id)}
-                      class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-                        activePhotoId === photo.id ? "grayscale-0" : "grayscale"
-                      } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
-                      loading="lazy"
-                      decoding="async"
-                      onload={() => markPhotoLoaded(photo.id)}
-                      onerror={tryDirectSource}
-                    />
-                  </div>
-                </a>
-              {:else}
-                <div
-                  role="button"
-                  tabindex="0"
-                  use:registerPhoto={photo.id}
-                  class={`group block overflow-hidden  -black bg-white ${
-                    activePhotoId === photo.id ? "ring-1 ring-black" : ""
-                  }`}
-                  onmouseenter={() => setActivePhoto(photo.id)}
-                  onmouseleave={clearActivePhoto}
-                  onfocusin={() => setActivePhoto(photo.id)}
-                  onfocusout={clearActivePhoto}
-                >
-                  <div
-                    class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
-                  >
-                    <span class="marker-text">Image unavailable</span>
-                  </div>
-                </div>
-              {/if}
-            {/each}
-          </div>
+          <PhotoArchive
+            bind:this={archiveRef}
+            photos={filteredPhotos}
+            {activePhotoId}
+            onenter={setActivePhoto}
+            onleave={clearActivePhoto}
+          />
         </div>
       </div>
     {/if}
