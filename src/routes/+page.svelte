@@ -89,24 +89,35 @@
 </svelte:head>
 
 <main>
-  <Hero />
+  <div class="sticky top-0 z-0">
+    <Hero />
+  </div>
 
-  <section>
+  <div class="relative z-10">
     {#if loadError}
-      <p class="mb-6 -black px-3 py-2 text-sm">
+      <p class="mb-6 px-3 py-2 text-sm">
         <span class="marker-text">{loadError}</span>
       </p>
     {/if}
 
-    {#if !photos.length}
-      <div class="mx-auto max-w-[1800px] -black px-5 py-10 text-sm">
-        <span class="marker-text">No photos yet.</span>
+  {#if !photos.length}
+    <div class="mx-auto max-w-[1800px] px-5 py-10 text-sm">
+      <span class="marker-text">No photos yet.</span>
+    </div>
+  {:else}
+    <div class="relative grid xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start">
+      <div class="pointer-events-none absolute inset-x-0 top-0 z-20 h-5 bg-gradient-to-b from-black to-transparent"></div>
+      <div class="sticky top-0 z-10 hidden xl:block">
+        <ArchiveMap
+          {photos}
+          {activePhotoId}
+          onhover={(event) => focusPhoto(event.id)}
+          onleave={clearActivePhoto}
+        />
       </div>
-    {:else}
-      <section
-        class="mx-auto grid max-w-[1800px] xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start"
-      >
-        <div class="sticky top-0 z-10 xl:top-2">
+
+      <div>
+        <div class="xl:hidden">
           <ArchiveMap
             {photos}
             {activePhotoId}
@@ -175,9 +186,11 @@
             {/if}
           {/each}
         </div>
-      </section>
-    {/if}
-  </section>
+      </div>
+    </div>
+  {/if}
+  </div>
 
   <Footer />
+
 </main>

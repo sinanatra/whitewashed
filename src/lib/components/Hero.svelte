@@ -47,24 +47,9 @@
     </span>
   </a>
 </div>
-<section
-  class=" pt-10 sm:pt-0 relative isolate overflow-hidden -b -black bg-black text-white"
->
-  <div class="group absolute inset-0">
-    <img
-      src="/hero.png"
-      alt="Whitewashed cover"
-      class="threshold-image-strong h-[450px] w-full object-cover"
-      loading="eager"
-    />
-    <div class="absolute inset-0 bg-black/55"></div>
-    <div
-      class="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/0"
-    ></div>
-  </div>
-
+<section class="relative bg-black text-white">
   <div
-    class="relative mx-auto flex min-h-[450px] max-w-7xl items-end px-4 py-10 sm:px-6 lg:px-8"
+    class="mx-auto flex max-w-7xl items-end px-4 py-8 sm:px-6 lg:px-8"
   >
     <div class="max-w-8xl pb-2">
       <h1 class="max-w-4xl text-4xl tracking-tight sm:text-5xl lg:text-6xl">
