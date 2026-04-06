@@ -1,6 +1,7 @@
 <script>
   import { imageReady } from "$lib/actions/image-ready.js";
   import ArchiveMap from "$lib/components/ArchiveMap.svelte";
+  import DateRangeSlider from "$lib/components/DateRangeSlider.svelte";
   import Footer from "$lib/components/Footer.svelte";
   import Hero from "$lib/components/Hero.svelte";
 
@@ -82,6 +83,8 @@
   function markPhotoLoaded(photoId) {
     loadedPhotoIds = { ...loadedPhotoIds, [photoId]: true };
   }
+
+  let filteredPhotos = $state([]);
 </script>
 
 <svelte:head>
@@ -100,97 +103,102 @@
       </p>
     {/if}
 
-  {#if !photos.length}
-    <div class="mx-auto max-w-[1800px] px-5 py-10 text-sm">
-      <span class="marker-text">No photos yet.</span>
-    </div>
-  {:else}
-    <div class="relative grid xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start">
-      <div class="pointer-events-none absolute inset-x-0 top-0 z-20 h-5 bg-gradient-to-b from-black to-transparent"></div>
-      <div class="sticky top-0 z-10 hidden xl:block">
-        <ArchiveMap
-          {photos}
-          {activePhotoId}
-          onhover={(event) => focusPhoto(event.id)}
-          onleave={clearActivePhoto}
-        />
+    {#if !photos.length}
+      <div class="mx-auto max-w-[1800px] px-5 py-10 text-sm">
+        <span class="marker-text">No photos yet.</span>
       </div>
-
-      <div>
-        <div class="xl:hidden">
+    {:else}
+      <div
+        class="relative grid xl:grid-cols-[minmax(0,0.6fr)_minmax(0,1.4fr)] xl:items-start"
+      >
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 z-20 h-5 bg-gradient-to-b from-black to-transparent"
+        ></div>
+        <div class="sticky top-0 z-10 hidden xl:block">
           <ArchiveMap
-            {photos}
+            photos={filteredPhotos}
             {activePhotoId}
             onhover={(event) => focusPhoto(event.id)}
             onleave={clearActivePhoto}
           />
         </div>
 
-        <div class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
-          {#each photos as photo}
-            {#if photo.imageUrl}
-              <a
-                href={photo.imageUrl}
-                target="_blank"
-                rel="noreferrer"
-                use:registerPhoto={photo.id}
-                class={`group block overflow-hidden  -black bg-white ""
+        <div>
+          <div class="xl:hidden">
+            <ArchiveMap
+              photos={filteredPhotos}
+              {activePhotoId}
+              onhover={(event) => focusPhoto(event.id)}
+              onleave={clearActivePhoto}
+            />
+          </div>
+
+          <DateRangeSlider {photos} bind:filteredPhotos />
+
+          <div
+            class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 bg-white z-10 h-full"
+          >
+            {#each filteredPhotos as photo}
+              {#if photo.imageUrl}
+                <a
+                  href={photo.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  use:registerPhoto={photo.id}
+                  class={`group block overflow-hidden  -black bg-white ""
                 }`}
-                onmouseenter={() => setActivePhoto(photo.id)}
-                onmouseleave={clearActivePhoto}
-                onfocusin={() => setActivePhoto(photo.id)}
-                onfocusout={clearActivePhoto}
-              >
-                <div class="image-frame aspect-[4/5] min-h-[200px] w-full">
-                  <div
-                    class={`scan-overlay ${
-                      loadedPhotoIds[photo.id] ? "scan-overlay-hidden" : ""
-                    }`}
-                    aria-hidden="true"
-                  ></div>
-                  <img
-                    src={photo.imageUrl}
-                    alt={photo.title || "Archive photo"}
-                    use:imageReady={() => markPhotoLoaded(photo.id)}
-                    class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-                      activePhotoId === photo.id
-                        ? "grayscale-0"
-                        : "grayscale"
-                    } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
-                    loading="lazy"
-                    decoding="async"
-                    onload={() => markPhotoLoaded(photo.id)}
-                    onerror={tryDirectSource}
-                  />
-                </div>
-              </a>
-            {:else}
-              <div
-                role="button"
-                tabindex="0"
-                use:registerPhoto={photo.id}
-                class={`group block overflow-hidden  -black bg-white ${
-                  activePhotoId === photo.id ? "ring-1 ring-black" : ""
-                }`}
-                onmouseenter={() => setActivePhoto(photo.id)}
-                onmouseleave={clearActivePhoto}
-                onfocusin={() => setActivePhoto(photo.id)}
-                onfocusout={clearActivePhoto}
-              >
-                <div
-                  class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
+                  onmouseenter={() => setActivePhoto(photo.id)}
+                  onmouseleave={clearActivePhoto}
+                  onfocusin={() => setActivePhoto(photo.id)}
+                  onfocusout={clearActivePhoto}
                 >
-                  <span class="marker-text">Image unavailable</span>
+                  <div class="image-frame aspect-[4/5] min-h-[200px] w-full">
+                    <div
+                      class={`scan-overlay ${
+                        loadedPhotoIds[photo.id] ? "scan-overlay-hidden" : ""
+                      }`}
+                      aria-hidden="true"
+                    ></div>
+                    <img
+                      src={photo.imageUrl}
+                      alt={photo.title || "Archive photo"}
+                      use:imageReady={() => markPhotoLoaded(photo.id)}
+                      class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
+                        activePhotoId === photo.id ? "grayscale-0" : "grayscale"
+                      } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
+                      loading="lazy"
+                      decoding="async"
+                      onload={() => markPhotoLoaded(photo.id)}
+                      onerror={tryDirectSource}
+                    />
+                  </div>
+                </a>
+              {:else}
+                <div
+                  role="button"
+                  tabindex="0"
+                  use:registerPhoto={photo.id}
+                  class={`group block overflow-hidden  -black bg-white ${
+                    activePhotoId === photo.id ? "ring-1 ring-black" : ""
+                  }`}
+                  onmouseenter={() => setActivePhoto(photo.id)}
+                  onmouseleave={clearActivePhoto}
+                  onfocusin={() => setActivePhoto(photo.id)}
+                  onfocusout={clearActivePhoto}
+                >
+                  <div
+                    class="flex aspect-[4/5] min-h-[200px] w-full items-center justify-center bg-neutral-100 text-xs uppercase tracking-[0.24em] text-black/50"
+                  >
+                    <span class="marker-text">Image unavailable</span>
+                  </div>
                 </div>
-              </div>
-            {/if}
-          {/each}
+              {/if}
+            {/each}
+          </div>
         </div>
       </div>
-    </div>
-  {/if}
+    {/if}
   </div>
 
   <Footer />
-
 </main>
