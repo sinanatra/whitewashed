@@ -289,7 +289,7 @@
         bind:this={mapElement}
         bind:clientWidth={viewportWidth}
         bind:clientHeight={viewportHeight}
-        class={`relative h-screen overflow-hidden touch-none -black bg-neutral-200 ${
+        class={`relative h-[30vh] xl:h-screen overflow-hidden touch-none -black bg-neutral-200 ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
         role="application"
