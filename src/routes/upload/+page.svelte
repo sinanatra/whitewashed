@@ -40,6 +40,7 @@
   let locationMode = $state("");
   let formState = $state({
     description: "",
+    credit: "",
     lat: "",
     lng: "",
     takenAt: "",
@@ -263,6 +264,7 @@
         formData.set("photoMetadataSource", originalUploadFile);
       }
       formData.set("description", formState.description);
+      formData.set("credit", formState.credit);
       formData.set("takenAt", formState.takenAt);
       formData.set("lat", formState.lat);
       formData.set("lng", formState.lng);
@@ -277,7 +279,7 @@
       }
 
       success = "Saved.";
-      formState = { description: "", lat: "", lng: "", takenAt: "" };
+      formState = { description: "", credit: "", lat: "", lng: "", takenAt: "" };
       uploadFile = null;
       originalUploadFile = null;
       locationSource = "";
@@ -423,6 +425,16 @@
       <input type="hidden" name="lat" value={formState.lat} />
       <input type="hidden" name="lng" value={formState.lng} />
     </div>
+
+    <label class="block text-sm">
+      <span class="marker-text">Credit (if you want)</span>
+      <input
+        type="text"
+        name="credit"
+        bind:value={formState.credit}
+        class="mt-1 w-full border border-black px-3 py-2"
+      />
+    </label>
 
     <button
       type="submit"

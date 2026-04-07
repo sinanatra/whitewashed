@@ -52,7 +52,8 @@ function getConfig() {
       imageBase64: String(readEnv('SEATABLE_COL_IMAGE_BASE64', 'image_base64')),
       imageMime: String(readEnv('SEATABLE_COL_IMAGE_MIME', 'image_mime')),
       imageName: String(readEnv('SEATABLE_COL_IMAGE_NAME', 'image_name')),
-      public: String(readEnv('SEATABLE_COL_PUBLIC', 'public'))
+      public: String(readEnv('SEATABLE_COL_PUBLIC', 'public')),
+      credit: String(readEnv('SEATABLE_COL_CREDIT', 'credit'))
     }
   };
 }
@@ -1334,6 +1335,7 @@ export async function saveSeatablePhoto(formData) {
   setIfColumnExists(config.columns.takenAt, takenAt);
   setIfColumnExists(config.columns.createdAt, createdAt);
   setIfColumnExists(config.columns.public, false);
+  setIfColumnExists(config.columns.credit, textValue(formData.get('credit')));
 
   let imageUrl = '';
   if (schema.hasImageColumn) {
