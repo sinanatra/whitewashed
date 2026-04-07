@@ -1,5 +1,6 @@
 <script>
   import * as exifr from "exifr";
+  import LocationPicker from "$lib/components/LocationPicker.svelte";
   function createRevealSequence(text) {
     const words = text.trim().split(/\s+/);
     const ranked = words
@@ -36,6 +37,7 @@
   let fileInput = $state();
   let cameraFileInput = $state();
   let locationSource = $state("");
+  let locationMode = $state("");
   let formState = $state({
     description: "",
     lat: "",
@@ -220,6 +222,7 @@
         formState.lat = String(position.coords.latitude);
         formState.lng = String(position.coords.longitude);
         locationSource = "device";
+        locationMode = "";
         error = "";
       },
       (err) => {
@@ -278,6 +281,7 @@
       uploadFile = null;
       originalUploadFile = null;
       locationSource = "";
+      locationMode = "";
       if (fileInput) fileInput.value = "";
       if (cameraFileInput) cameraFileInput.value = "";
     } catch (err) {
@@ -371,71 +375,53 @@
       ></textarea>
     </label>
 
-    <div class="grid gap-4 sm:grid-cols-2">
-      <label class="block text-sm">
-        <span class="marker-text">Taken at</span>
-        <input
-          type="datetime-local"
-          name="takenAt"
-          bind:value={formState.takenAt}
-          class="mt-1 w-full border border-black px-3 py-2"
-        />
-      </label>
+    <label class="block text-sm">
+      <span class="marker-text">Taken at</span>
+      <input
+        type="datetime-local"
+        name="takenAt"
+        bind:value={formState.takenAt}
+        class="mt-1 w-full border border-black px-3 py-2"
+      />
+    </label>
 
-      <div class="pt-6 flex items-center gap-3">
+    <div class="block text-sm">
+      <span class="marker-text">Location</span>
+      <div class="mt-1 flex flex-wrap gap-2">
         <button
           type="button"
-          onclick={useBrowserLocation}
+          onclick={() => { useBrowserLocation(); locationMode = ""; }}
           class="border border-black px-3 py-2 text-sm"
-          ><span class="marker-text">Use current location</span></button
-        >
-        {#if locationSource === "device"}
-          <span class="text-xs text-black/50"
-            ><span class="marker-text">from device</span></span
-          >
-        {:else if locationSource === "photo"}
-          <span class="text-xs text-black/50"
-            ><span class="marker-text">from photo</span></span
-          >
-        {/if}
+        ><span class="marker-text">Use current location</span></button>
+        <button
+          type="button"
+          onclick={() => { locationMode = locationMode === "map" ? "" : "map"; }}
+          class={`border px-3 py-2 text-sm ${locationMode === "map" ? "border-black bg-black text-white" : "border-black"}`}
+        ><span class="marker-text">Pick on map</span></button>
       </div>
 
-      <label class="block text-sm">
-        <span class="marker-text">Latitude</span>
-        <input
-          type="number"
-          step="any"
-          min="-90"
-          max="90"
-          name="lat"
-          bind:value={formState.lat}
-          placeholder="e.g. 52.5200"
-          class="mt-1 w-full border border-black px-3 py-2"
-        />
-      </label>
+      {#if locationMode === "map"}
+        <div class="mt-2">
+          <LocationPicker bind:lat={formState.lat} bind:lng={formState.lng} />
+        </div>
+      {/if}
 
-      <label class="block text-sm">
-        <span class="marker-text">Longitude</span>
-        <input
-          type="number"
-          step="any"
-          min="-180"
-          max="180"
-          name="lng"
-          bind:value={formState.lng}
-          placeholder="e.g. 13.4050"
-          class="mt-1 w-full border border-black px-3 py-2"
-        />
-      </label>
-
-      {#if (!formState.lat || !formState.lng) && uploadFile}
-        <p class="col-span-2 text-sm text-black/50">
-          <span class="marker-text"
-            >No location found — allow location access when prompted, or enter
-            coordinates manually.</span
-          >
+      {#if formState.lat && formState.lng}
+        <p class="mt-2 text-xs text-black/50">
+          <span class="marker-text">
+            {#if locationSource === "photo"}from photo — {/if}
+            {#if locationSource === "device"}from device — {/if}
+            {Number(formState.lat).toFixed(5)}, {Number(formState.lng).toFixed(5)}
+          </span>
+        </p>
+      {:else if uploadFile}
+        <p class="mt-2 text-xs text-black/50">
+          <span class="marker-text">No location found in photo — use current location or pick on map.</span>
         </p>
       {/if}
+
+      <input type="hidden" name="lat" value={formState.lat} />
+      <input type="hidden" name="lng" value={formState.lng} />
     </div>
 
     <button
