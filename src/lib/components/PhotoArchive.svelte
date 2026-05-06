@@ -44,6 +44,17 @@
     img.src = direct;
   }
 </script>
+<!-- 
+<svg aria-hidden="true" width="0" height="0" class="absolute pointer-events-none">
+  <filter id="archive-black-threshold" color-interpolation-filters="sRGB">
+    <feColorMatrix type="saturate" values="0" result="mono" />
+    <feComponentTransfer in="mono">
+      <feFuncR type="discrete" tableValues="0 0 0 1 1 1" />
+      <feFuncG type="discrete" tableValues="0 0 0 1 1 1" />
+      <feFuncB type="discrete" tableValues="0 0 0 1 1 1" />
+    </feComponentTransfer>
+  </filter>
+</svg> -->
 
 <div class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 bg-white">
   {#each photos as photo}
@@ -69,7 +80,7 @@
             alt={photo.title || "Archive photo"}
             use:imageReady={() => markPhotoLoaded(photo.id)}
             class={`image-resolve aspect-[4/5] min-h-[200px] w-full object-cover transition duration-500 ${
-              activePhotoId === photo.id ? "grayscale-0" : "grayscale"
+              activePhotoId === photo.id ? "archive-image-active" : "archive-image-muted"
             } ${loadedPhotoIds[photo.id] ? "image-resolve-loaded" : ""}`}
             loading="lazy"
             decoding="async"
