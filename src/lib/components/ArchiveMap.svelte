@@ -282,7 +282,7 @@
   );
 </script>
 
-<!-- <svg aria-hidden="true" width="0" height="0" class="absolute pointer-events-none">
+<svg aria-hidden="true" width="0" height="0" class="absolute pointer-events-none">
   <filter id="map-black-threshold" color-interpolation-filters="sRGB">
     <feColorMatrix type="saturate" values="0" result="mono" />
     <feComponentTransfer in="mono">
@@ -291,7 +291,7 @@
       <feFuncB type="discrete" tableValues="0 0 0 1 1 1" />
     </feComponentTransfer>
   </filter>
-</svg> -->
+</svg>
 
 <section class="flex bg-white">
   {#if geotaggedPhotos.length}

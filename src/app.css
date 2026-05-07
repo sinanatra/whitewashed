@@ -12,13 +12,10 @@ body {
   font-family: "Times New Roman", Times, serif;
   min-height: 100vh;
   text-rendering: geometricPrecision;
+  -webkit-font-smoothing: none;
   text-rendering: optimizeSpeed;
   font-kerning: normal;
   font-variant-ligatures: common-ligatures;
-}
-
-.site-threshold {
-  filter: url("#site-black-threshold") contrast(0.8) brightness(1.01);
 }
 
 .marker-text {
@@ -61,11 +58,11 @@ body {
 }
 
 .archive-image-muted {
-  filter: none;
+  filter: url("#archive-black-threshold") contrast(1.14) brightness(1.05);
 }
 
 .map-threshold {
-  filter: none;
+  filter: url("#map-black-threshold") contrast(1.08) brightness(1.02);
 }
 
 .scan-overlay {
@@ -131,8 +128,7 @@ body {
   }
 }
 
-
 ::selection {
   color: white;
-  background: black
+  background: black;
 }

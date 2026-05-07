@@ -44,7 +44,6 @@
     img.src = direct;
   }
 </script>
-<!-- 
 <svg aria-hidden="true" width="0" height="0" class="absolute pointer-events-none">
   <filter id="archive-black-threshold" color-interpolation-filters="sRGB">
     <feColorMatrix type="saturate" values="0" result="mono" />
@@ -54,7 +53,7 @@
       <feFuncB type="discrete" tableValues="0 0 0 1 1 1" />
     </feComponentTransfer>
   </filter>
-</svg> -->
+</svg>
 
 <div class="grid gap-0 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 bg-white">
   {#each photos as photo}
