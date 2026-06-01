@@ -62,7 +62,7 @@ body {
 }
 
 .map-threshold {
-  filter: url("#map-black-threshold") contrast(1.08) brightness(1.02);
+  filter: url("#map-black-threshold") contrast(0.6) brightness(1.25);
 }
 
 .scan-overlay {
